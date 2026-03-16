@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
-import { format, eachDayOfInterval, subDays, subWeeks, subMonths, parseISO, differenceInDays } from 'date-fns';
+import { format, eachDayOfInterval, subDays, subWeeks, subMonths, parseISO, differenceInDays, getDaysInMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useObjectivesStore from '../../store/objectivesStore';
 import useStatsStore from '../../store/statsStore';
@@ -46,36 +46,59 @@ export default function StatsScreen() {
 
     const today = new Date();
     const todayStr = format(today, 'yyyy-MM-dd');
-    const activeCount = objectives.filter((o) => o.is_active).length || 1;
+    // Si un objectif est sélectionné, le dénominateur est 1, sinon tous les actifs
+    const activeCount = selectedObjective
+      ? 1
+      : (objectives.filter((o) => o.is_active).length || 1);
 
-    const makePoint = (logs, label, isToday = false) => {
-      const done = logs.filter((l) => l.status === 'done').length;
-      const total = isToday ? activeCount : (logs.length || 1);
-      const rate = Math.round((done / total) * 100);
+    const makePoint = (doneDays, totalDays, label, isCurrent = false) => {
+      // doneDays = nombre de jours réussis, totalDays = nombre de jours dans la période
+      const rate = totalDays > 0 ? Math.min(100, Math.round((doneDays / totalDays) * 100)) : 0;
       return {
         value: rate,
         label,
         dataPointText: `${rate}%`,
-        dataPointColor: isToday ? colors.accent : colors.text.muted,
-        dataPointRadius: isToday ? 8 : 5,
+        dataPointColor: isCurrent ? colors.accent : colors.text.muted,
+        dataPointRadius: isCurrent ? 8 : 5,
         textShiftY: -14,
-        textColor: isToday ? colors.accent : colors.text.muted,
-        textFontSize: isToday ? 12 : 10,
+        textColor: isCurrent ? colors.accent : colors.text.muted,
+        textFontSize: isCurrent ? 12 : 10,
       };
     };
 
+    // Compter les jours distincts "done" dans un ensemble de logs
+    const countDoneDays = (logs) => {
+      const doneDates = new Set(
+        logs.filter((l) => l.status === 'done').map((l) => l.log_date)
+      );
+      return doneDates.size;
+    };
+
     if (period === 'week') {
+      // Par jour : done/activeCount objectifs ce jour-là
       const days = eachDayOfInterval({ start: subDays(today, 6), end: today });
       return days.map((day) => {
         const dateStr = format(day, 'yyyy-MM-dd');
         const isToday = dateStr === todayStr;
         const dayLogs = stats.logs.filter((l) => l.log_date === dateStr);
+        const done = dayLogs.filter((l) => l.status === 'done').length;
+        const rate = Math.min(100, Math.round((done / activeCount) * 100));
         const label = isToday ? 'Auj.' : format(day, 'EEE', { locale: fr }).slice(0, 2);
-        return makePoint(dayLogs, label, isToday);
+        return {
+          value: rate,
+          label,
+          dataPointText: `${rate}%`,
+          dataPointColor: isToday ? colors.accent : colors.text.muted,
+          dataPointRadius: isToday ? 8 : 5,
+          textShiftY: -14,
+          textColor: isToday ? colors.accent : colors.text.muted,
+          textFontSize: isToday ? 12 : 10,
+        };
       });
     }
 
     if (period === 'month') {
+      // Par semaine : jours done / 7
       return Array.from({ length: 4 }, (_, i) => {
         const weekEnd = subWeeks(today, 3 - i);
         const weekStart = subDays(weekEnd, 6);
@@ -84,23 +107,23 @@ export default function StatsScreen() {
           return d >= weekStart && d <= weekEnd;
         });
         const isCurrentWeek = i === 3;
-        return makePoint(weekLogs, isCurrentWeek ? 'Actu.' : `S-${3 - i}`, isCurrentWeek);
+        const doneDays = countDoneDays(weekLogs);
+        return makePoint(doneDays, 7, isCurrentWeek ? 'Actu.' : `S-${3 - i}`, isCurrentWeek);
       });
     }
 
     if (period === 'year') {
-      // Ne garder que les mois qui ont des logs
-      const months = [];
-      for (let i = 0; i < 12; i++) {
+      // Par mois : jours done / nombre de jours dans le mois
+      return Array.from({ length: 12 }, (_, i) => {
         const monthDate = subMonths(today, 11 - i);
         const monthStr = format(monthDate, 'yyyy-MM');
         const monthLogs = stats.logs.filter((l) => l.log_date.startsWith(monthStr));
-        if (monthLogs.length === 0 && i !== 11) continue; // toujours garder le mois actuel
         const isCurrentMonth = i === 11;
+        const doneDays = countDoneDays(monthLogs);
+        const daysInMonth = getDaysInMonth(monthDate);
         const label = format(monthDate, 'MMM', { locale: fr }).slice(0, 3);
-        months.push(makePoint(monthLogs, label, isCurrentMonth));
-      }
-      return months;
+        return makePoint(doneDays, daysInMonth, label, isCurrentMonth);
+      });
     }
 
     return [];
@@ -225,7 +248,7 @@ export default function StatsScreen() {
                   suffix="%"
                   maxVal={100}
                   scrollable={period === 'year'}
-                  minSpacing={period === 'year' ? 60 : 0}
+                  minSpacing={period === 'year' ? 75 : 0}
                 />
               </View>
             )}
@@ -461,6 +484,9 @@ function SmoothChart({ data, screenWidth, accentColor, suffix = '', maxVal, scro
       {/* Zone graphique — scrollable ou non */}
       {scrollable ? (
         <ScrollView
+          ref={(ref) => {
+            if (ref) setTimeout(() => ref.scrollToEnd({ animated: false }), 50);
+          }}
           horizontal
           showsHorizontalScrollIndicator={false}
           style={chartStyles.graphArea}
