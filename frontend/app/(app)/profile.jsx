@@ -125,6 +125,11 @@ export default function ProfileScreen() {
   return (
     <GradientBackground style={{ flex: 1 }}>
       <SafeAreaView style={styles.container}>
+        {/* Header fixe */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Profil</Text>
+        </View>
+
         <ScrollView showsVerticalScrollIndicator={false}>
 
           {/* ─── Avatar + identité ─── */}
@@ -445,6 +450,16 @@ function ChangePasswordModal({ visible, onClose, onSave }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  headerTitle: {
+    ...typography.h2,
+    color: C.primary,
+    fontWeight: 'bold',
+  },
 
   heroSection: {
     alignItems: 'center',

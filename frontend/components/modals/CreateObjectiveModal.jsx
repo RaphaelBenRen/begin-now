@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   View, Text, Modal, StyleSheet, ScrollView,
   TouchableOpacity, TextInput, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OBJECTIVE_TEMPLATES, OBJECTIVE_COLORS } from '../../constants/templates';
@@ -137,7 +138,8 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
             </TouchableOpacity>
           </ScrollView>
         ) : (
-          <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Icône + titre */}
             <View style={styles.previewRow}>
               <View style={[styles.previewIcon, { backgroundColor: selectedColor + '25' }]}>
@@ -256,6 +258,7 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
               }
             </TouchableOpacity>
           </ScrollView>
+          </KeyboardAvoidingView>
         )}
       </SafeAreaView>
     </Modal>

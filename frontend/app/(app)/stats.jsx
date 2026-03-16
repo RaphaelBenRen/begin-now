@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
 import { format, eachDayOfInterval, subDays, subWeeks, subMonths, parseISO, differenceInDays, getDaysInMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -225,13 +226,13 @@ export default function StatsScreen() {
 
   return (
     <GradientBackground style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Header fixe */}
         <View style={styles.header}>
           <Text style={styles.title}>Statistiques</Text>
         </View>
 
-        {/* Filtres période */}
+        {/* Filtres période — fixe */}
         <View style={styles.periodRow}>
           {PERIODS.map((p) => (
             <TouchableOpacity
@@ -246,40 +247,40 @@ export default function StatsScreen() {
           ))}
         </View>
 
-        {/* Filtre objectifs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.objectiveFilters}
-        >
-          <TouchableOpacity
-            style={[styles.objChip, !selectedObjective && styles.objChipActive]}
-            onPress={() => setSelectedObjective(null)}
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Filtre objectifs */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.objectiveFilters}
           >
-            <Text style={[styles.objChipText, !selectedObjective && styles.objChipTextActive]}>
-              Tous
-            </Text>
-          </TouchableOpacity>
-          {objectives.map((obj) => (
             <TouchableOpacity
-              key={obj.id}
-              style={[
-                styles.objChip,
-                selectedObjective === obj.id && { backgroundColor: obj.color, borderColor: obj.color },
-              ]}
-              onPress={() => setSelectedObjective(selectedObjective === obj.id ? null : obj.id)}
+              style={[styles.objChip, !selectedObjective && styles.objChipActive]}
+              onPress={() => setSelectedObjective(null)}
             >
-              <Text style={{ marginRight: 4 }}>{obj.icon}</Text>
-              <Text style={[
-                styles.objChipText,
-                selectedObjective === obj.id && styles.objChipTextActive,
-              ]}>
-                {obj.title}
+              <Text style={[styles.objChipText, !selectedObjective && styles.objChipTextActive]}>
+                Tous
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-
+            {objectives.map((obj) => (
+              <TouchableOpacity
+                key={obj.id}
+                style={[
+                  styles.objChip,
+                  selectedObjective === obj.id && { backgroundColor: obj.color, borderColor: obj.color },
+                ]}
+                onPress={() => setSelectedObjective(selectedObjective === obj.id ? null : obj.id)}
+              >
+                <Text style={{ marginRight: 4 }}>{obj.icon}</Text>
+                <Text style={[
+                  styles.objChipText,
+                  selectedObjective === obj.id && styles.objChipTextActive,
+                ]}>
+                  {obj.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         {isLoading ? (
           <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xxl }} />
         ) : (
@@ -428,6 +429,7 @@ export default function StatsScreen() {
         currentUserId={user?.id}
         onClose={() => setDuelProgress(null)}
       />
+      </SafeAreaView>
     </GradientBackground>
   );
 }
