@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, Modal, StyleSheet, ScrollView,
-  TouchableOpacity, ActivityIndicator,
+  TouchableOpacity, ActivityIndicator, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
@@ -20,8 +20,10 @@ export default function FriendProfileModal({ visible, onClose, friend, onChallen
     setIsLoading(true);
     try {
       const data = await getFriendObjectives(friend.id);
-      setObjectives(data);
-    } catch (_) {}
+      setObjectives(data || []);
+    } catch (err) {
+      console.warn('[FriendProfile] objectives error:', err.response?.status, err.response?.data);
+    }
     setIsLoading(false);
   };
 
@@ -45,11 +47,15 @@ export default function FriendProfileModal({ visible, onClose, friend, onChallen
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Avatar + info */}
           <View style={styles.profileSection}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {friend.username?.[0]?.toUpperCase()}
-              </Text>
-            </View>
+            {friend.avatar_url ? (
+              <Image source={{ uri: friend.avatar_url }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {friend.username?.[0]?.toUpperCase()}
+                </Text>
+              </View>
+            )}
             <Text style={styles.username}>{friend.username}</Text>
             <View style={styles.todayChip}>
               <Text style={styles.todayText}>
@@ -134,6 +140,10 @@ const styles = StyleSheet.create({
   avatar: {
     width: 72, height: 72, borderRadius: 36,
     backgroundColor: colors.accentLight, alignItems: 'center', justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 72, height: 72, borderRadius: 36,
+    borderWidth: 3, borderColor: colors.accent,
   },
   avatarText: { fontSize: 30, fontWeight: '700', color: colors.accent },
   username: { ...typography.h2, color: colors.text.primary },

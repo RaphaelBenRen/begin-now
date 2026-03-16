@@ -117,7 +117,7 @@ router.get('/:friendId/objectives', async (req, res) => {
   const { friendId } = req.params;
 
   // Vérifier qu'ils sont bien amis
-  const { data: friendship } = await supabase
+  const { data: friendship, error: friendError } = await supabase
     .from('friendships')
     .select('id')
     .or(
@@ -126,26 +126,36 @@ router.get('/:friendId/objectives', async (req, res) => {
     .eq('status', 'accepted')
     .single();
 
+  if (friendError) console.log('[friends/objectives] friendship check error:', friendError.message);
   if (!friendship) return res.status(403).json({ message: 'Vous n\'êtes pas amis.' });
 
   const today = new Date().toISOString().split('T')[0];
 
+  // D'abord récupérer les objectifs sans le filtre is_public pour diagnostiquer
   const { data, error } = await supabase
     .from('objectives')
     .select(`
-      *,
+      id, title, icon, color, type, is_public, is_active,
       streak:streaks(current_streak, longest_streak),
       today_log:daily_logs(status, value, log_date)
     `)
     .eq('user_id', friendId)
-    .eq('is_active', true)
-    .eq('is_public', true);
+    .eq('is_active', true);
 
-  if (error) return res.status(500).json({ message: error.message });
+  if (error) {
+    console.log('[friends/objectives] query error:', error.message);
+    return res.status(500).json({ message: error.message });
+  }
 
-  // Filtrer le log du jour uniquement
-  const result = data.map((obj) => ({
+  console.log(`[friends/objectives] friendId=${friendId} → ${data?.length} objectives total, public: ${data?.filter(o => o.is_public).length}`);
+
+  // Filtrer is_public côté JS pour être sûr
+  const publicObjs = (data || []).filter((obj) => obj.is_public === true);
+
+  // Filtrer le log du jour uniquement + aplatir streak
+  const result = publicObjs.map((obj) => ({
     ...obj,
+    streak: Array.isArray(obj.streak) ? obj.streak[0] || null : obj.streak,
     today_log: (obj.today_log || []).find((l) => l.log_date === today) || null,
   }));
 

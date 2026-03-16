@@ -1,17 +1,19 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, TextInput, Alert, ActivityIndicator, Modal,
+  Image, TextInput, Alert, ActivityIndicator, Modal, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useAuthStore from '../../store/authStore';
+import useObjectivesStore from '../../store/objectivesStore';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 
 export default function ProfileScreen() {
   const { user, logout, fetchFullProfile, updateUsername, uploadAvatar, changePassword, deleteAccount } = useAuthStore();
+  const { objectives, fetchObjectives, updateObjective } = useObjectivesStore();
   const [profile, setProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
@@ -30,6 +32,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     loadProfile();
+    fetchObjectives();
   }, []);
 
   // ─── Changer la photo ─────────────────────────────────────
@@ -155,6 +158,37 @@ export default function ProfileScreen() {
                 </View>
               ))}
             </ScrollView>
+          </View>
+        )}
+
+        {/* ─── Objectifs partagés ─── */}
+        {objectives.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Objectifs partagés</Text>
+            <Text style={styles.sharingHint}>
+              Les objectifs activés sont visibles par tes amis.
+            </Text>
+            <View style={styles.settingsCard}>
+              {objectives.map((obj, index) => (
+                <View key={obj.id}>
+                  {index > 0 && <View style={styles.divider} />}
+                  <View style={styles.shareRow}>
+                    <Text style={styles.shareIcon}>{obj.icon}</Text>
+                    <Text style={styles.shareLabel} numberOfLines={1}>{obj.title}</Text>
+                    <Switch
+                      value={obj.is_public !== false}
+                      onValueChange={async (val) => {
+                        try {
+                          await updateObjective(obj.id, { is_public: val });
+                        } catch (_) {}
+                      }}
+                      trackColor={{ false: colors.border, true: colors.accent + '60' }}
+                      thumbColor={obj.is_public !== false ? colors.accent : colors.text.muted}
+                    />
+                  </View>
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
@@ -466,6 +500,16 @@ const styles = StyleSheet.create({
   settingsValue: { ...typography.small, color: colors.text.muted, maxWidth: 120 },
   settingsChevron: { fontSize: 20, color: colors.text.muted, marginLeft: 2 },
   divider: { height: 1, backgroundColor: colors.border, marginLeft: 56 },
+  sharingHint: {
+    ...typography.small, color: colors.text.muted, marginBottom: spacing.sm,
+  },
+  shareRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2,
+    gap: spacing.md,
+  },
+  shareIcon: { fontSize: 18, width: 24, textAlign: 'center' },
+  shareLabel: { ...typography.body, color: colors.text.primary, flex: 1 },
 
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

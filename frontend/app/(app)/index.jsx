@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { format, isToday } from 'date-fns';
+import { format, isToday, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useAuthStore from '../../store/authStore';
 import useObjectivesStore from '../../store/objectivesStore';
+import api from '../../lib/api';
 import ObjectiveCard from '../../components/objectives/ObjectiveCard';
 import CreateObjectiveModal from '../../components/modals/CreateObjectiveModal';
+import EditObjectiveModal from '../../components/modals/EditObjectiveModal';
 import DateSelector from '../../components/ui/DateSelector';
 import { colors, spacing, typography } from '../../constants/theme';
 
@@ -15,16 +17,32 @@ export default function DashboardScreen() {
   const {
     objectives, fetchObjectives,
     fetchLogsByDate, getLogsForDate, logObjective, createObjective,
+    updateObjective, archiveObjective,
   } = useObjectivesStore();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [modalVisible, setModalVisible] = useState(false);
+  const [editObjective, setEditObjective] = useState(null);
+  const [loggedDates, setLoggedDates] = useState([]);
 
   const isSelectedToday = isToday(selectedDate);
   const logs = getLogsForDate(selectedDate);
 
   useEffect(() => {
     fetchObjectives();
+    // Charger les dates avec au moins un log "done" (90 derniers jours)
+    const loadLoggedDates = async () => {
+      try {
+        const from = format(subDays(new Date(), 90), 'yyyy-MM-dd');
+        const to = format(new Date(), 'yyyy-MM-dd');
+        const res = await api.get('/logs/history', { params: { from, to } });
+        const doneDates = [...new Set(
+          res.data.filter((l) => l.status === 'done').map((l) => l.log_date)
+        )];
+        setLoggedDates(doneDates);
+      } catch (_) {}
+    };
+    loadLoggedDates();
   }, []);
 
   useEffect(() => {
@@ -63,7 +81,7 @@ export default function DashboardScreen() {
       </View>
 
       {/* Sélecteur de dates */}
-      <DateSelector selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+      <DateSelector selectedDate={selectedDate} onSelectDate={setSelectedDate} loggedDates={loggedDates} />
 
       {/* Bannière jour passé */}
       {!isSelectedToday && (
@@ -91,6 +109,10 @@ export default function DashboardScreen() {
                 objective={objective}
                 log={logs[objective.id]}
                 onLog={handleLog}
+                onEdit={(obj) => setEditObjective(obj)}
+                onDelete={async (id) => {
+                  await archiveObjective(id);
+                }}
                 readOnly={!isSelectedToday}
               />
             ))
@@ -109,6 +131,13 @@ export default function DashboardScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSubmit={createObjective}
+      />
+
+      <EditObjectiveModal
+        visible={!!editObjective}
+        objective={editObjective}
+        onClose={() => setEditObjective(null)}
+        onSave={updateObjective}
       />
     </SafeAreaView>
   );

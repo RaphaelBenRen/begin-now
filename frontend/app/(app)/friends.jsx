@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert,
+  TextInput, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, parseISO } from 'date-fns';
@@ -156,11 +156,15 @@ export default function FriendsScreen() {
             ) : (
               requests.map((req) => (
                 <View key={req.id} style={styles.requestCard}>
-                  <View style={styles.requestAvatar}>
-                    <Text style={styles.requestAvatarText}>
-                      {req.requester.username[0].toUpperCase()}
-                    </Text>
-                  </View>
+                  {req.requester.avatar_url ? (
+                    <Image source={{ uri: req.requester.avatar_url }} style={styles.friendAvatarImg} />
+                  ) : (
+                    <View style={styles.requestAvatar}>
+                      <Text style={styles.requestAvatarText}>
+                        {req.requester.username[0].toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
                   <View style={styles.requestInfo}>
                     <Text style={styles.requestName}>{req.requester.username}</Text>
                     <Text style={styles.requestDate}>
@@ -271,11 +275,15 @@ export default function FriendsScreen() {
 function FriendCard({ friend, onViewProfile, onChallenge }) {
   return (
     <TouchableOpacity style={styles.friendCard} onPress={onViewProfile} activeOpacity={0.8}>
-      <View style={styles.friendAvatar}>
-        <Text style={styles.friendAvatarText}>
-          {friend.username[0].toUpperCase()}
-        </Text>
-      </View>
+      {friend.avatar_url ? (
+        <Image source={{ uri: friend.avatar_url }} style={styles.friendAvatarImg} />
+      ) : (
+        <View style={styles.friendAvatar}>
+          <Text style={styles.friendAvatarText}>
+            {friend.username[0].toUpperCase()}
+          </Text>
+        </View>
+      )}
       <View style={styles.friendInfo}>
         <Text style={styles.friendName}>{friend.username}</Text>
         <Text style={styles.friendPoints}>
@@ -395,6 +403,10 @@ const styles = StyleSheet.create({
   friendAvatar: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: colors.accentLight, alignItems: 'center', justifyContent: 'center',
+  },
+  friendAvatarImg: {
+    width: 44, height: 44, borderRadius: 22,
+    borderWidth: 2, borderColor: colors.accentLight,
   },
   friendAvatarText: { fontSize: 18, fontWeight: '700', color: colors.accent },
   friendInfo: { flex: 1 },

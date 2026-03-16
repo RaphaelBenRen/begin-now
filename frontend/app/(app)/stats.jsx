@@ -135,16 +135,87 @@ export default function StatsScreen() {
     const obj = objectives.find((o) => o.id === selectedObjective);
     if (!obj || obj.type !== 'quantifiable') return [];
 
-    const quantLogs = stats.logs.filter(
-      (l) => l.objective_id === selectedObjective && l.value != null
-    );
+    const quantLogs = stats.logs
+      .filter((l) => l.objective_id === selectedObjective && l.value != null)
+      .sort((a, b) => a.log_date.localeCompare(b.log_date));
     if (!quantLogs.length) return [];
+
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+
+    if (period === 'week') {
+      return quantLogs.map((l) => {
+        const isToday = l.log_date === todayStr;
+        return {
+          value: l.value,
+          label: isToday ? 'Auj.' : format(parseISO(l.log_date), 'EEE', { locale: fr }).slice(0, 2),
+          dataPointText: `${l.value}`,
+          dataPointColor: isToday ? colors.accent : colors.text.muted,
+        };
+      });
+    }
+
+    if (period === 'month') {
+      // Agréger par semaine
+      return Array.from({ length: 4 }, (_, i) => {
+        const weekEnd = subWeeks(today, 3 - i);
+        const weekStart = subDays(weekEnd, 6);
+        const weekLogs = quantLogs.filter((l) => {
+          const d = parseISO(l.log_date);
+          return d >= weekStart && d <= weekEnd;
+        });
+        const total = weekLogs.reduce((s, l) => s + l.value, 0);
+        const isCurrentWeek = i === 3;
+        return {
+          value: total,
+          label: isCurrentWeek ? 'Actu.' : `S-${3 - i}`,
+          dataPointText: `${total}`,
+          dataPointColor: isCurrentWeek ? colors.accent : colors.text.muted,
+        };
+      });
+    }
+
+    if (period === 'year') {
+      return Array.from({ length: 12 }, (_, i) => {
+        const monthDate = subMonths(today, 11 - i);
+        const monthStr = format(monthDate, 'yyyy-MM');
+        const monthLogs = quantLogs.filter((l) => l.log_date.startsWith(monthStr));
+        const total = monthLogs.reduce((s, l) => s + l.value, 0);
+        const isCurrentMonth = i === 11;
+        return {
+          value: total,
+          label: format(monthDate, 'MMM', { locale: fr }).slice(0, 3),
+          dataPointText: `${total}`,
+          dataPointColor: isCurrentMonth ? colors.accent : colors.text.muted,
+        };
+      });
+    }
 
     return quantLogs.map((l) => ({
       value: l.value,
       label: format(parseISO(l.log_date), 'd/M'),
-      dataPointText: String(l.value),
+      dataPointText: `${l.value}`,
+      dataPointColor: colors.text.muted,
     }));
+  }, [stats, selectedObjective, objectives, period]);
+
+  // ─── Résumé quantifiable ───
+  const quantSummary = useMemo(() => {
+    if (!stats?.logs?.length || !selectedObjective) return null;
+    const obj = objectives.find((o) => o.id === selectedObjective);
+    if (!obj || obj.type !== 'quantifiable') return null;
+
+    const quantLogs = stats.logs.filter(
+      (l) => l.objective_id === selectedObjective && l.value != null
+    );
+    if (!quantLogs.length) return null;
+
+    const total = quantLogs.reduce((s, l) => s + l.value, 0);
+    const avg = Math.round((total / quantLogs.length) * 10) / 10;
+    const max = Math.max(...quantLogs.map((l) => l.value));
+    const min = Math.min(...quantLogs.map((l) => l.value));
+
+    return { total, avg, max, min, count: quantLogs.length, unit: obj.unit || '' };
   }, [stats, selectedObjective, objectives]);
 
   const selectedObj = objectives.find((o) => o.id === selectedObjective);
@@ -260,14 +331,50 @@ export default function StatsScreen() {
                   {selectedObj.icon} {selectedObj.title} ({selectedObj.unit})
                 </Text>
                 <SmoothChart
-                  data={lineData.map((d) => ({
-                    ...d,
-                    dataPointText: `${d.value}`,
-                  }))}
+                  data={lineData}
                   screenWidth={screenWidth}
                   accentColor={selectedObj.color || colors.accent}
                   suffix={selectedObj.unit ? ` ${selectedObj.unit}` : ''}
+                  scrollable={period === 'year'}
+                  minSpacing={period === 'year' ? 75 : 0}
                 />
+              </View>
+            )}
+
+            {/* Résumé quantifiable */}
+            {isQuantifiable && quantSummary && (
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>
+                  Résumé — {selectedObj.icon} {selectedObj.title}
+                </Text>
+                <View style={styles.summaryRow}>
+                  <SummaryCard
+                    label={`Total${quantSummary.unit ? ` (${quantSummary.unit})` : ''}`}
+                    value={String(quantSummary.total)}
+                    color={selectedObj.color || colors.accent}
+                    bg={(selectedObj.color || colors.accent) + '15'}
+                  />
+                  <SummaryCard
+                    label="Moyenne/jour"
+                    value={String(quantSummary.avg)}
+                    color={colors.accent}
+                    bg={colors.accentLight}
+                  />
+                </View>
+                <View style={[styles.summaryRow, { marginTop: spacing.sm }]}>
+                  <SummaryCard
+                    label="Maximum"
+                    value={String(quantSummary.max)}
+                    color={colors.danger}
+                    bg={colors.dangerLight}
+                  />
+                  <SummaryCard
+                    label="Minimum"
+                    value={String(quantSummary.min)}
+                    color={colors.success}
+                    bg={colors.successLight}
+                  />
+                </View>
               </View>
             )}
 

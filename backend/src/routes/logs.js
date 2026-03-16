@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
       user_id: req.user.id,
       log_date: today,
       status,
-      value: objective.type === 'quantifiable' ? (value ?? null) : null,
+      value: objective.type === 'quantifiable' && value != null ? value : null,
       note: note || null,
     }, { onConflict: 'objective_id,log_date' })
     .select()
