@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, ActivityIndicator,
+  TouchableOpacity, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BarChart, LineChart } from 'react-native-gifted-charts';
+import { LineChart } from 'react-native-gifted-charts';
 import { format, eachDayOfInterval, subDays, subWeeks, subMonths, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useObjectivesStore from '../../store/objectivesStore';
@@ -28,6 +28,9 @@ export default function StatsScreen() {
   const [period, setPeriod] = useState('week');
   const [selectedObjective, setSelectedObjective] = useState(null);
   const [duelProgress, setDuelProgress] = useState(null);
+  const { width: screenWidth } = useWindowDimensions();
+  // Largeur utile : écran - marges card (lg*2) - padding card (md*2) - petit buffer
+  const chartWidth = screenWidth - spacing.lg * 2 - spacing.md * 2 - 4;
 
   useEffect(() => {
     fetchObjectives();
@@ -39,19 +42,30 @@ export default function StatsScreen() {
     fetchStats(period, selectedObjective);
   }, [period, selectedObjective]);
 
-  // ─── Données graphique barres (taux de réussite par jour/semaine) ───
-  const barData = useMemo(() => {
+  // ─── Données courbe de complétion (remplace le graphique en barres) ───
+  const completionData = useMemo(() => {
     if (!stats?.logs?.length) return [];
 
     const today = new Date();
-    let days = [];
 
     if (period === 'week') {
-      days = eachDayOfInterval({ start: subDays(today, 6), end: today });
-    } else if (period === 'month') {
-      // Grouper par semaine (dernières 4 semaines)
+      const days = eachDayOfInterval({ start: subDays(today, 6), end: today });
+      return days.map((day) => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        const dayLogs = stats.logs.filter((l) => l.log_date === dateStr);
+        const done = dayLogs.filter((l) => l.status === 'done').length;
+        const total = dayLogs.length;
+        return {
+          value: total > 0 ? Math.round((done / total) * 100) : 0,
+          label: format(day, 'EEE', { locale: fr }).slice(0, 2),
+          dataPointText: total > 0 ? `${Math.round((done / total) * 100)}%` : '',
+        };
+      });
+    }
+
+    if (period === 'month') {
       return Array.from({ length: 4 }, (_, i) => {
-        const weekEnd = subWeeks(today, i);
+        const weekEnd = subWeeks(today, 3 - i);
         const weekStart = subDays(weekEnd, 6);
         const weekLogs = stats.logs.filter((l) => {
           const d = parseISO(l.log_date);
@@ -61,15 +75,13 @@ export default function StatsScreen() {
         const total = weekLogs.length;
         return {
           value: total > 0 ? Math.round((done / total) * 100) : 0,
-          label: `S${4 - i}`,
-          frontColor: total > 0 && done === total ? colors.success : colors.accent,
-          topLabelComponent: () => total > 0 ? (
-            <Text style={styles.barLabel}>{Math.round((done / total) * 100)}%</Text>
-          ) : null,
+          label: `S${i + 1}`,
+          dataPointText: total > 0 ? `${Math.round((done / total) * 100)}%` : '',
         };
-      }).reverse();
-    } else if (period === 'year') {
-      // Grouper par mois (derniers 12 mois)
+      });
+    }
+
+    if (period === 'year') {
       return Array.from({ length: 12 }, (_, i) => {
         const monthDate = subMonths(today, 11 - i);
         const monthStr = format(monthDate, 'yyyy-MM');
@@ -78,30 +90,14 @@ export default function StatsScreen() {
         const total = monthLogs.length;
         return {
           value: total > 0 ? Math.round((done / total) * 100) : 0,
-          label: format(monthDate, 'MMM', { locale: fr }).slice(0, 3),
-          frontColor: total > 0 && done === total ? colors.success : colors.accent,
-          topLabelComponent: () => total > 0 ? (
-            <Text style={styles.barLabel}>{Math.round((done / total) * 100)}%</Text>
-          ) : null,
+          // n'afficher le label que pour les mois pairs (janv, mars, mai…)
+          label: i % 2 === 0 ? format(monthDate, 'MMM', { locale: fr }).slice(0, 3) : '',
+          dataPointText: total > 0 ? `${Math.round((done / total) * 100)}%` : '',
         };
       });
     }
 
-    // Par jour (semaine)
-    return days.map((day) => {
-      const dateStr = format(day, 'yyyy-MM-dd');
-      const dayLogs = stats.logs.filter((l) => l.log_date === dateStr);
-      const done = dayLogs.filter((l) => l.status === 'done').length;
-      const total = dayLogs.length;
-      return {
-        value: total > 0 ? Math.round((done / total) * 100) : 0,
-        label: format(day, 'EEE', { locale: fr }).slice(0, 2),
-        frontColor: total > 0 && done === total ? colors.success : colors.accent,
-        topLabelComponent: () => total > 0 ? (
-          <Text style={styles.barLabel}>{Math.round((done / total) * 100)}%</Text>
-        ) : null,
-      };
-    });
+    return [];
   }, [stats, period]);
 
   // ─── Données ligne (objectif quantifiable sélectionné) ───
@@ -210,45 +206,50 @@ export default function StatsScreen() {
               </View>
             )}
 
-            {/* Graphique barres — taux de complétion */}
-            {barData.length > 0 && (
+            {/* Courbe de complétion */}
+            {completionData.length > 0 && (
               <View style={styles.card}>
                 <Text style={styles.cardTitle}>
                   Taux de complétion {selectedObj ? `— ${selectedObj.icon} ${selectedObj.title}` : ''}
                 </Text>
                 <View style={styles.chartWrapper}>
-                  <BarChart
-                    data={barData}
-                    barWidth={period === 'year' ? 18 : 30}
-                    spacing={period === 'year' ? 8 : 14}
-                    roundedTop
-                    roundedBottom
+                  <LineChart
+                    data={completionData}
+                    width={chartWidth}
+                    height={180}
+                    color={colors.accent}
+                    thickness={2.5}
+                    dataPointsColor={colors.accent}
+                    dataPointsRadius={5}
                     hideRules
                     xAxisThickness={0}
                     yAxisThickness={0}
-                    yAxisTextStyle={{ color: colors.text.muted, fontSize: 10 }}
-                    xAxisLabelTextStyle={{ color: colors.text.muted, fontSize: 10 }}
-                    noOfSections={4}
-                    maxValue={100}
-                    isAnimated
-                    animationDuration={600}
-                    barBorderRadius={4}
-                    showYAxisIndices={false}
                     hideYAxisText
-                    labelsExtraHeight={20}
-                    width={320}
+                    xAxisLabelTextStyle={{ color: colors.text.muted, fontSize: 10 }}
+                    maxValue={100}
+                    minValue={0}
+                    noOfSections={4}
+                    isAnimated
+                    animationDuration={800}
+                    curved
+                    curvature={0.15}
+                    areaChart
+                    startFillColor={colors.accent + '40'}
+                    endFillColor={colors.accent + '00'}
+                    startOpacity={0.4}
+                    endOpacity={0}
+                    initialSpacing={12}
+                    endSpacing={12}
+                    spacing={(chartWidth - 24) / Math.max(completionData.length - 1, 1)}
+                    showTextOnFocus
+                    focusEnabled
+                    showDataPointOnFocus
+                    focusedDataPointRadius={6}
+                    focusedDataPointColor={colors.accent}
+                    textShiftY={-10}
+                    textFontSize={10}
+                    textColor={colors.text.secondary}
                   />
-                </View>
-                {/* Légende */}
-                <View style={styles.legend}>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-                    <Text style={styles.legendText}>100%</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: colors.accent }]} />
-                    <Text style={styles.legendText}>Partiel</Text>
-                  </View>
                 </View>
               </View>
             )}
@@ -262,22 +263,33 @@ export default function StatsScreen() {
                 <View style={styles.chartWrapper}>
                   <LineChart
                     data={lineData}
-                    width={320}
+                    width={chartWidth}
                     height={180}
                     color={selectedObj.color || colors.accent}
-                    thickness={2}
+                    thickness={2.5}
                     dataPointsColor={selectedObj.color || colors.accent}
-                    dataPointsRadius={4}
+                    dataPointsRadius={5}
                     hideRules
                     xAxisThickness={0}
                     yAxisThickness={0}
-                    yAxisTextStyle={{ color: colors.text.muted, fontSize: 10 }}
+                    hideYAxisText
                     xAxisLabelTextStyle={{ color: colors.text.muted, fontSize: 10 }}
                     isAnimated
+                    animationDuration={800}
                     curved
-                    startFillColor={selectedObj.color + '30' || colors.accentLight}
-                    endFillColor="transparent"
+                    curvature={0.15}
                     areaChart
+                    startFillColor={(selectedObj.color || colors.accent) + '40'}
+                    endFillColor="transparent"
+                    startOpacity={0.4}
+                    endOpacity={0}
+                    initialSpacing={12}
+                    endSpacing={12}
+                    spacing={(chartWidth - 24) / Math.max(lineData.length - 1, 1)}
+                    focusEnabled
+                    showDataPointOnFocus
+                    focusedDataPointRadius={6}
+                    focusedDataPointColor={selectedObj.color || colors.accent}
                   />
                 </View>
               </View>
@@ -555,12 +567,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   chartWrapper: { alignItems: 'center', overflow: 'hidden' },
-  barLabel: { fontSize: 9, color: colors.text.muted },
-
-  legend: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm, justifyContent: 'flex-end' },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { ...typography.caption, color: colors.text.muted },
 
   streakList: { gap: spacing.sm },
   streakRow: {
