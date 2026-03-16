@@ -11,6 +11,7 @@ const logsRoutes = require('./routes/logs');
 const statsRoutes = require('./routes/stats');
 const friendsRoutes = require('./routes/friends');
 const profileRoutes = require('./routes/profile');
+const duelsRoutes = require('./routes/duels');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +50,7 @@ app.use('/logs', logsRoutes);
 app.use('/stats', statsRoutes);
 app.use('/friends', friendsRoutes);
 app.use('/profile', profileRoutes);
+app.use('/duels', duelsRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
