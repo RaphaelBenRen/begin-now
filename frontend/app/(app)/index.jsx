@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
@@ -6,11 +6,13 @@ import { fr } from 'date-fns/locale';
 import useAuthStore from '../../store/authStore';
 import useObjectivesStore from '../../store/objectivesStore';
 import ObjectiveCard from '../../components/objectives/ObjectiveCard';
+import CreateObjectiveModal from '../../components/modals/CreateObjectiveModal';
 import { colors, spacing, typography } from '../../constants/theme';
 
 export default function DashboardScreen() {
   const { user } = useAuthStore();
-  const { objectives, todayLogs, fetchObjectives, fetchTodayLogs, logObjective } = useObjectivesStore();
+  const { objectives, todayLogs, fetchObjectives, fetchTodayLogs, logObjective, createObjective } = useObjectivesStore();
+  const [modalVisible, setModalVisible] = useState(false);
 
   const today = format(new Date(), 'EEEE d MMMM', { locale: fr });
 
@@ -20,6 +22,10 @@ export default function DashboardScreen() {
   }, []);
 
   const doneCount = objectives.filter((o) => todayLogs[o.id]?.status === 'done').length;
+
+  const handleCreateObjective = async (data) => {
+    await createObjective(data);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -41,7 +47,7 @@ export default function DashboardScreen() {
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>Aucun objectif</Text>
               <Text style={styles.emptySubtitle}>
-                Crée ton premier objectif en appuyant sur +
+                Appuie sur + pour créer ton premier objectif
               </Text>
             </View>
           ) : (
@@ -58,9 +64,16 @@ export default function DashboardScreen() {
       </ScrollView>
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab}>
+      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
+
+      {/* Modal création objectif */}
+      <CreateObjectiveModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleCreateObjective}
+      />
     </SafeAreaView>
   );
 }

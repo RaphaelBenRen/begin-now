@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { getToken, clearToken } from './tokenManager';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -9,9 +9,9 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Injecte le token JWT dans chaque requête
-api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('access_token');
+// Intercepteur synchrone — lit le token depuis le gestionnaire en mémoire
+api.interceptors.request.use((config) => {
+  const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,10 +21,9 @@ api.interceptors.request.use(async (config) => {
 // Gestion globale des erreurs 401
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  (error) => {
     if (error.response?.status === 401) {
-      await SecureStore.deleteItemAsync('access_token');
-      await SecureStore.deleteItemAsync('refresh_token');
+      clearToken();
     }
     return Promise.reject(error);
   }
