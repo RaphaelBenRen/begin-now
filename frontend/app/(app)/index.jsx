@@ -1,47 +1,81 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { format } from 'date-fns';
+import { format, isToday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useAuthStore from '../../store/authStore';
 import useObjectivesStore from '../../store/objectivesStore';
 import ObjectiveCard from '../../components/objectives/ObjectiveCard';
 import CreateObjectiveModal from '../../components/modals/CreateObjectiveModal';
+import DateSelector from '../../components/ui/DateSelector';
 import { colors, spacing, typography } from '../../constants/theme';
 
 export default function DashboardScreen() {
   const { user } = useAuthStore();
-  const { objectives, todayLogs, fetchObjectives, fetchTodayLogs, logObjective, createObjective } = useObjectivesStore();
+  const {
+    objectives, fetchObjectives,
+    fetchLogsByDate, getLogsForDate, logObjective, createObjective,
+  } = useObjectivesStore();
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [modalVisible, setModalVisible] = useState(false);
 
-  const today = format(new Date(), 'EEEE d MMMM', { locale: fr });
+  const isSelectedToday = isToday(selectedDate);
+  const logs = getLogsForDate(selectedDate);
 
   useEffect(() => {
     fetchObjectives();
-    fetchTodayLogs();
   }, []);
 
-  const doneCount = objectives.filter((o) => todayLogs[o.id]?.status === 'done').length;
+  useEffect(() => {
+    fetchLogsByDate(selectedDate);
+  }, [selectedDate]);
 
-  const handleCreateObjective = async (data) => {
-    await createObjective(data);
+  const doneCount = objectives.filter((o) => logs[o.id]?.status === 'done').length;
+  const totalCount = objectives.length;
+
+  const handleLog = async (objectiveId, status, value) => {
+    if (!isSelectedToday) return; // lecture seule pour les jours passés
+    await logObjective(objectiveId, status, value);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Bonjour, {user?.username} 👋</Text>
-            <Text style={styles.date}>{today}</Text>
-          </View>
-          <View style={styles.scoreChip}>
-            <Text style={styles.scoreText}>{doneCount}/{objectives.length}</Text>
-          </View>
+      {/* Header fixe */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Bonjour, {user?.username} 👋</Text>
+          <Text style={styles.headerDate}>
+            {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
+          </Text>
         </View>
+        <View style={[
+          styles.scoreChip,
+          doneCount === totalCount && totalCount > 0 && styles.scoreChipPerfect,
+        ]}>
+          <Text style={[
+            styles.scoreText,
+            doneCount === totalCount && totalCount > 0 && styles.scoreTextPerfect,
+          ]}>
+            {doneCount}/{totalCount}
+          </Text>
+        </View>
+      </View>
 
-        {/* Objectifs du jour */}
+      {/* Sélecteur de dates */}
+      <DateSelector selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+
+      {/* Bannière jour passé */}
+      {!isSelectedToday && (
+        <View style={styles.pastBanner}>
+          <Text style={styles.pastBannerText}>
+            📅 Historique — lecture seule
+          </Text>
+        </View>
+      )}
+
+      {/* Liste des objectifs */}
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
         <View style={styles.section}>
           {objectives.length === 0 ? (
             <View style={styles.empty}>
@@ -55,50 +89,46 @@ export default function DashboardScreen() {
               <ObjectiveCard
                 key={objective.id}
                 objective={objective}
-                log={todayLogs[objective.id]}
-                onLog={logObjective}
+                log={logs[objective.id]}
+                onLog={handleLog}
+                readOnly={!isSelectedToday}
               />
             ))
           )}
         </View>
       </ScrollView>
 
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      {/* FAB — seulement visible aujourd'hui */}
+      {isSelectedToday && (
+        <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+          <Text style={styles.fabText}>+</Text>
+        </TouchableOpacity>
+      )}
 
-      {/* Modal création objectif */}
       <CreateObjectiveModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onSubmit={handleCreateObjective}
+        onSubmit={createObjective}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
-  greeting: {
-    ...typography.h2,
-    color: colors.text.primary,
-  },
-  date: {
+  greeting: { ...typography.h2, color: colors.text.primary },
+  headerDate: {
     ...typography.small,
     color: colors.text.secondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
     textTransform: 'capitalize',
   },
   scoreChip: {
@@ -107,29 +137,28 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: 20,
   },
-  scoreText: {
-    ...typography.bodyMedium,
-    color: colors.accent,
+  scoreChipPerfect: { backgroundColor: colors.successLight },
+  scoreText: { ...typography.bodyMedium, color: colors.accent },
+  scoreTextPerfect: { color: colors.success },
+  pastBanner: {
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.sm,
+    backgroundColor: colors.warningLight,
+    borderRadius: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
+  pastBannerText: { ...typography.small, color: colors.warning },
+  scroll: { flex: 1 },
   section: {
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
     paddingBottom: 100,
     gap: spacing.sm,
   },
-  empty: {
-    marginTop: spacing.xxl,
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  emptyTitle: {
-    ...typography.h3,
-    color: colors.text.secondary,
-  },
-  emptySubtitle: {
-    ...typography.body,
-    color: colors.text.muted,
-    textAlign: 'center',
-  },
+  empty: { marginTop: spacing.xxl, alignItems: 'center', gap: spacing.sm },
+  emptyTitle: { ...typography.h3, color: colors.text.secondary },
+  emptySubtitle: { ...typography.body, color: colors.text.muted, textAlign: 'center' },
   fab: {
     position: 'absolute',
     bottom: 100,
@@ -146,9 +175,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  fabText: {
-    fontSize: 28,
-    color: '#fff',
-    lineHeight: 32,
-  },
+  fabText: { fontSize: 28, color: '#fff', lineHeight: 32 },
 });

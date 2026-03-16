@@ -70,7 +70,7 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
     setIsLoading(true);
     try {
       await onSubmit({
-        template_id: selected !== 'custom' ? selected?.slug : null,
+        template_id: null,
         title: title.trim(),
         type,
         unit: type === 'quantifiable' ? unit.trim() : null,

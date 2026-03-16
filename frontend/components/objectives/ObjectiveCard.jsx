@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 
-export default function ObjectiveCard({ objective, log, onLog }) {
+export default function ObjectiveCard({ objective, log, onLog, readOnly = false }) {
   const [isLogging, setIsLogging] = useState(false);
 
   const status = log?.status ?? null;
@@ -10,7 +10,7 @@ export default function ObjectiveCard({ objective, log, onLog }) {
   const isFailed = status === 'failed';
 
   const handleDone = async () => {
-    if (isLogging) return;
+    if (isLogging || readOnly) return;
     setIsLogging(true);
     try {
       await onLog(objective.id, isDone ? null : 'done');
@@ -20,7 +20,7 @@ export default function ObjectiveCard({ objective, log, onLog }) {
   };
 
   const handleFailed = async () => {
-    if (isLogging) return;
+    if (isLogging || readOnly) return;
     setIsLogging(true);
     try {
       await onLog(objective.id, isFailed ? null : 'failed');
