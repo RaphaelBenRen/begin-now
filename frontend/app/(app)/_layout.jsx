@@ -1,17 +1,7 @@
 import { Tabs } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
-
-function TabIcon({ emoji, focused }) {
-  return (
-    <View style={[styles.iconWrapper, focused && styles.iconFocused]}>
-      <View style={{ opacity: focused ? 1 : 0.4 }}>
-        {/* On utilisera des icônes vectorielles plus tard */}
-        {/* Pour l'instant emoji en attendant l'intégration Lucide */}
-      </View>
-    </View>
-  );
-}
 
 export default function AppLayout() {
   return (
@@ -28,9 +18,9 @@ export default function AppLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Aujourd\'hui',
-          tabBarIcon: ({ focused }) => (
-            <TabBarEmoji emoji="○" focused={focused} />
+          title: "Aujourd'hui",
+          tabBarIcon: ({ color }) => (
+            <Feather name="check-circle" size={24} color={color} />
           ),
         }}
       />
@@ -38,8 +28,8 @@ export default function AppLayout() {
         name="stats"
         options={{
           title: 'Stats',
-          tabBarIcon: ({ focused }) => (
-            <TabBarEmoji emoji="▦" focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <Feather name="bar-chart-2" size={24} color={color} />
           ),
         }}
       />
@@ -47,8 +37,8 @@ export default function AppLayout() {
         name="friends"
         options={{
           title: 'Amis',
-          tabBarIcon: ({ focused }) => (
-            <TabBarEmoji emoji="◎" focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <Feather name="users" size={24} color={color} />
           ),
         }}
       />
@@ -56,8 +46,8 @@ export default function AppLayout() {
         name="profile"
         options={{
           title: 'Profil',
-          tabBarIcon: ({ focused }) => (
-            <TabBarEmoji emoji="◯" focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <Feather name="user" size={24} color={color} />
           ),
         }}
       />
@@ -65,34 +55,16 @@ export default function AppLayout() {
   );
 }
 
-function TabBarEmoji({ emoji, focused }) {
-  return (
-    <View style={{ opacity: focused ? 1 : 0.35 }}>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
+    position: 'absolute',
     height: 80,
-    paddingBottom: 16,
-    paddingTop: 8,
+    backgroundColor: 'rgba(8, 16, 35, 0.95)',
+    borderTopWidth: 0,
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '500',
-  },
-  iconWrapper: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-  },
-  iconFocused: {
-    backgroundColor: colors.accentLight,
+    marginBottom: 15,
   },
 });

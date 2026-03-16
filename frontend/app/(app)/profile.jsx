@@ -9,7 +9,28 @@ import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useAuthStore from '../../store/authStore';
 import useObjectivesStore from '../../store/objectivesStore';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
+import GradientBackground from '../../components/ui/GradientBackground';
+
+// ─── Dark navy glassmorphism palette ──────────────────────────
+const C = {
+  primary: '#ffffff',
+  secondary: 'rgba(255,255,255,0.7)',
+  muted: 'rgba(255,255,255,0.4)',
+  glass: 'rgba(15,25,50,0.95)',
+  border: 'rgba(255,255,255,0.2)',
+  borderSubtle: 'rgba(255,255,255,0.1)',
+  accent: '#3b82f6',
+  accentBg: 'rgba(59,130,246,0.2)',
+  accentTrack: 'rgba(59,130,246,0.4)',
+  inputBg: 'rgba(255,255,255,0.05)',
+  trackFalse: 'rgba(255,255,255,0.1)',
+  modalBg: '#0a1628',
+  danger: '#ff7675',
+  success: '#00b894',
+  warning: '#fdcb6e',
+  cameraBg: 'rgba(15,25,50,0.9)',
+};
 
 export default function ProfileScreen() {
   const { user, logout, fetchFullProfile, updateUsername, uploadAvatar, changePassword, deleteAccount } = useAuthStore();
@@ -106,152 +127,154 @@ export default function ProfileScreen() {
     : null;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <GradientBackground style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* ─── Avatar + identité ─── */}
-        <View style={styles.heroSection}>
-          <TouchableOpacity style={styles.avatarWrapper} onPress={handlePickAvatar} activeOpacity={0.85}>
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitial}>
-                  {user?.username?.[0]?.toUpperCase() ?? '?'}
-                </Text>
+          {/* ─── Avatar + identité ─── */}
+          <View style={styles.heroSection}>
+            <TouchableOpacity style={styles.avatarWrapper} onPress={handlePickAvatar} activeOpacity={0.85}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Text style={styles.avatarInitial}>
+                    {user?.username?.[0]?.toUpperCase() ?? '?'}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.cameraOverlay}>
+                <Text style={styles.cameraIcon}>📷</Text>
               </View>
+            </TouchableOpacity>
+
+            <Text style={styles.username}>{user?.username}</Text>
+            <Text style={styles.email}>{user?.email}</Text>
+            {memberSince && (
+              <Text style={styles.memberSince}>Membre depuis {memberSince}</Text>
             )}
-            <View style={styles.cameraOverlay}>
-              <Text style={styles.cameraIcon}>📷</Text>
+          </View>
+
+          {/* ─── Stats ─── */}
+          {isLoadingProfile ? (
+            <ActivityIndicator color={C.accent} style={{ marginBottom: spacing.lg }} />
+          ) : profile ? (
+            <View style={styles.statsRow}>
+              <StatCard value={profile.total_points} label="Points" color={C.accent} />
+              <StatCard value={profile.stats?.badges ?? 0} label="Badges" color={C.warning} />
+              <StatCard value={profile.stats?.objectives ?? 0} label="Objectifs" color={C.success} />
+              <StatCard value={profile.stats?.friends ?? 0} label="Amis" color={C.secondary} />
             </View>
-          </TouchableOpacity>
+          ) : null}
 
-          <Text style={styles.username}>{user?.username}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
-          {memberSince && (
-            <Text style={styles.memberSince}>Membre depuis {memberSince}</Text>
-          )}
-        </View>
-
-        {/* ─── Stats ─── */}
-        {isLoadingProfile ? (
-          <ActivityIndicator color={colors.accent} style={{ marginBottom: spacing.lg }} />
-        ) : profile ? (
-          <View style={styles.statsRow}>
-            <StatCard value={profile.total_points} label="Points" color={colors.accent} />
-            <StatCard value={profile.stats?.badges ?? 0} label="Badges" color={colors.warning} />
-            <StatCard value={profile.stats?.objectives ?? 0} label="Objectifs" color={colors.success} />
-            <StatCard value={profile.stats?.friends ?? 0} label="Amis" color={colors.text.secondary} />
-          </View>
-        ) : null}
-
-        {/* ─── Badges ─── */}
-        {profile?.badges?.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mes badges</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
-              {profile.badges.map((ub) => (
-                <View key={ub.id} style={styles.badgeCard}>
-                  <Text style={styles.badgeIcon}>{ub.badge.icon}</Text>
-                  <Text style={styles.badgeName}>{ub.badge.name}</Text>
-                  <Text style={styles.badgeObj} numberOfLines={1}>{ub.objective?.title}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* ─── Objectifs partagés ─── */}
-        {objectives.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Objectifs partagés</Text>
-            <Text style={styles.sharingHint}>
-              Les objectifs activés sont visibles par tes amis.
-            </Text>
-            <View style={styles.settingsCard}>
-              {objectives.map((obj, index) => (
-                <View key={obj.id}>
-                  {index > 0 && <View style={styles.divider} />}
-                  <View style={styles.shareRow}>
-                    <Text style={styles.shareIcon}>{obj.icon}</Text>
-                    <Text style={styles.shareLabel} numberOfLines={1}>{obj.title}</Text>
-                    <Switch
-                      value={obj.is_public !== false}
-                      onValueChange={async (val) => {
-                        try {
-                          await updateObjective(obj.id, { is_public: val });
-                        } catch (_) {}
-                      }}
-                      trackColor={{ false: colors.border, true: colors.accent + '60' }}
-                      thumbColor={obj.is_public !== false ? colors.accent : colors.text.muted}
-                    />
+          {/* ─── Badges ─── */}
+          {profile?.badges?.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Mes badges</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
+                {profile.badges.map((ub) => (
+                  <View key={ub.id} style={styles.badgeCard}>
+                    <Text style={styles.badgeIcon}>{ub.badge.icon}</Text>
+                    <Text style={styles.badgeName}>{ub.badge.name}</Text>
+                    <Text style={styles.badgeObj} numberOfLines={1}>{ub.objective?.title}</Text>
                   </View>
-                </View>
-              ))}
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* ─── Objectifs partagés ─── */}
+          {objectives.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Objectifs partagés</Text>
+              <Text style={styles.sharingHint}>
+                Les objectifs activés sont visibles par tes amis.
+              </Text>
+              <View style={styles.settingsCard}>
+                {objectives.map((obj, index) => (
+                  <View key={obj.id}>
+                    {index > 0 && <View style={styles.divider} />}
+                    <View style={styles.shareRow}>
+                      <Text style={styles.shareIcon}>{obj.icon}</Text>
+                      <Text style={styles.shareLabel} numberOfLines={1}>{obj.title}</Text>
+                      <Switch
+                        value={obj.is_public !== false}
+                        onValueChange={async (val) => {
+                          try {
+                            await updateObjective(obj.id, { is_public: val });
+                          } catch (_) {}
+                        }}
+                        trackColor={{ false: C.trackFalse, true: C.accentTrack }}
+                        thumbColor={obj.is_public !== false ? C.accent : C.muted}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* ─── Mon compte ─── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Mon compte</Text>
+            <View style={styles.settingsCard}>
+              <SettingsRow
+                icon="✏️"
+                label="Modifier le pseudo"
+                value={`@${user?.username}`}
+                onPress={() => setUsernameModal(true)}
+              />
+              <View style={styles.divider} />
+              <SettingsRow
+                icon="🔒"
+                label="Changer le mot de passe"
+                onPress={() => setPasswordModal(true)}
+              />
             </View>
           </View>
-        )}
 
-        {/* ─── Mon compte ─── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mon compte</Text>
-          <View style={styles.settingsCard}>
-            <SettingsRow
-              icon="✏️"
-              label="Modifier le pseudo"
-              value={`@${user?.username}`}
-              onPress={() => setUsernameModal(true)}
-            />
-            <View style={styles.divider} />
-            <SettingsRow
-              icon="🔒"
-              label="Changer le mot de passe"
-              onPress={() => setPasswordModal(true)}
-            />
+          {/* ─── Application ─── */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Application</Text>
+            <View style={styles.settingsCard}>
+              <SettingsRow icon="📱" label="Version" value="1.0.0" />
+            </View>
           </View>
-        </View>
 
-        {/* ─── Application ─── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Application</Text>
-          <View style={styles.settingsCard}>
-            <SettingsRow icon="📱" label="Version" value="1.0.0" />
+          {/* ─── Actions compte ─── */}
+          <View style={[styles.section, { gap: spacing.sm }]}>
+            <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+              <Text style={styles.logoutIcon}>🚪</Text>
+              <Text style={styles.logoutText}>Se déconnecter</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
+              <Text style={styles.deleteText}>Supprimer mon compte</Text>
+            </TouchableOpacity>
           </View>
-        </View>
 
-        {/* ─── Actions compte ─── */}
-        <View style={[styles.section, { gap: spacing.sm }]}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutIcon}>🚪</Text>
-            <Text style={styles.logoutText}>Se déconnecter</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
-            <Text style={styles.deleteText}>Supprimer mon compte</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={{ height: spacing.xxl }} />
+        </ScrollView>
 
-        <View style={{ height: spacing.xxl }} />
-      </ScrollView>
+        {/* ─── Modal : modifier le pseudo ─── */}
+        <EditUsernameModal
+          visible={usernameModal}
+          currentUsername={user?.username}
+          onClose={() => setUsernameModal(false)}
+          onSave={async (newUsername) => {
+            await updateUsername(newUsername);
+            setUsernameModal(false);
+            await loadProfile();
+          }}
+        />
 
-      {/* ─── Modal : modifier le pseudo ─── */}
-      <EditUsernameModal
-        visible={usernameModal}
-        currentUsername={user?.username}
-        onClose={() => setUsernameModal(false)}
-        onSave={async (newUsername) => {
-          await updateUsername(newUsername);
-          setUsernameModal(false);
-          await loadProfile();
-        }}
-      />
-
-      {/* ─── Modal : changer le mot de passe ─── */}
-      <ChangePasswordModal
-        visible={passwordModal}
-        onClose={() => setPasswordModal(false)}
-        onSave={changePassword}
-      />
-    </SafeAreaView>
+        {/* ─── Modal : changer le mot de passe ─── */}
+        <ChangePasswordModal
+          visible={passwordModal}
+          onClose={() => setPasswordModal(false)}
+          onSave={changePassword}
+        />
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
 
@@ -314,7 +337,7 @@ function EditUsernameModal({ visible, currentUsername, onClose, onSave }) {
           <Text style={modalStyles.title}>Modifier le pseudo</Text>
           <TouchableOpacity onPress={handleSave} disabled={isLoading}>
             {isLoading
-              ? <ActivityIndicator color={colors.accent} />
+              ? <ActivityIndicator color={C.accent} />
               : <Text style={modalStyles.save}>Enregistrer</Text>
             }
           </TouchableOpacity>
@@ -329,6 +352,7 @@ function EditUsernameModal({ visible, currentUsername, onClose, onSave }) {
             autoCorrect={false}
             autoFocus
             maxLength={30}
+            placeholderTextColor={C.muted}
           />
           {error ? <Text style={modalStyles.errorText}>{error}</Text> : null}
           <Text style={modalStyles.hint}>
@@ -378,8 +402,8 @@ function ChangePasswordModal({ visible, onClose, onSave }) {
           <Text style={modalStyles.title}>Mot de passe</Text>
           <TouchableOpacity onPress={handleSave} disabled={isLoading || success}>
             {isLoading
-              ? <ActivityIndicator color={colors.accent} />
-              : <Text style={[modalStyles.save, success && { color: colors.success }]}>
+              ? <ActivityIndicator color={C.accent} />
+              : <Text style={[modalStyles.save, success && { color: C.success }]}>
                   {success ? '✓ Fait' : 'Enregistrer'}
                 </Text>
             }
@@ -393,6 +417,7 @@ function ChangePasswordModal({ visible, onClose, onSave }) {
             onChangeText={setCurrent}
             secureTextEntry
             autoFocus
+            placeholderTextColor={C.muted}
           />
           <Text style={[modalStyles.label, { marginTop: spacing.md }]}>Nouveau mot de passe</Text>
           <TextInput
@@ -400,6 +425,7 @@ function ChangePasswordModal({ visible, onClose, onSave }) {
             value={next}
             onChangeText={setNext}
             secureTextEntry
+            placeholderTextColor={C.muted}
           />
           <Text style={[modalStyles.label, { marginTop: spacing.md }]}>Confirmer le nouveau</Text>
           <TextInput
@@ -407,6 +433,7 @@ function ChangePasswordModal({ visible, onClose, onSave }) {
             value={confirm}
             onChangeText={setConfirm}
             secureTextEntry
+            placeholderTextColor={C.muted}
           />
           {error ? <Text style={modalStyles.errorText}>{error}</Text> : null}
         </View>
@@ -418,7 +445,7 @@ function ChangePasswordModal({ visible, onClose, onSave }) {
 // ─── Styles ──────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
 
   heroSection: {
     alignItems: 'center',
@@ -429,65 +456,64 @@ const styles = StyleSheet.create({
   avatarWrapper: { position: 'relative', marginBottom: spacing.sm },
   avatarImage: {
     width: 100, height: 100, borderRadius: 50,
-    borderWidth: 3, borderColor: colors.accent,
+    borderWidth: 3, borderColor: C.accent,
   },
   avatarPlaceholder: {
     width: 100, height: 100, borderRadius: 50,
-    backgroundColor: colors.accentLight,
+    backgroundColor: C.accentBg,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 3, borderColor: colors.accent,
+    borderWidth: 3, borderColor: C.accent,
   },
-  avatarInitial: { fontSize: 38, fontWeight: '700', color: colors.accent },
+  avatarInitial: { fontSize: 38, fontWeight: '700', color: C.accent },
   cameraOverlay: {
     position: 'absolute', bottom: 0, right: 0,
     width: 30, height: 30, borderRadius: 15,
-    backgroundColor: colors.surface,
-    borderWidth: 2, borderColor: colors.border,
+    backgroundColor: C.cameraBg,
+    borderWidth: 2, borderColor: C.border,
     alignItems: 'center', justifyContent: 'center',
   },
   cameraIcon: { fontSize: 14 },
-  username: { ...typography.h2, color: colors.text.primary },
-  email: { ...typography.body, color: colors.text.secondary },
-  memberSince: { ...typography.caption, color: colors.text.muted },
+  username: { ...typography.h2, color: C.primary, fontWeight: '700' },
+  email: { ...typography.body, color: C.secondary },
+  memberSince: { ...typography.caption, color: C.muted },
 
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
+    backgroundColor: C.glass,
+    borderRadius: 20,
+    borderWidth: 1, borderColor: C.border,
     overflow: 'hidden',
-    ...shadows.sm,
   },
   statCard: {
     flex: 1, alignItems: 'center', paddingVertical: spacing.md,
-    borderRightWidth: 1, borderRightColor: colors.border,
+    borderRightWidth: 1, borderRightColor: C.borderSubtle,
   },
   statValue: { ...typography.h3 },
-  statLabel: { ...typography.caption, color: colors.text.muted, marginTop: 2 },
+  statLabel: { ...typography.caption, color: C.muted, marginTop: 2 },
 
   section: { marginHorizontal: spacing.lg, marginBottom: spacing.lg },
   sectionTitle: {
-    ...typography.smallMedium, color: colors.text.muted,
+    ...typography.smallMedium, color: C.muted,
     textTransform: 'uppercase', letterSpacing: 0.8,
     marginBottom: spacing.sm,
   },
 
   badgesScroll: { marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg },
   badgeCard: {
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
+    backgroundColor: C.glass, borderRadius: 20,
+    borderWidth: 1, borderColor: C.border,
     padding: spacing.md, marginRight: spacing.sm,
-    alignItems: 'center', gap: 4, minWidth: 80, ...shadows.sm,
+    alignItems: 'center', gap: 4, minWidth: 80,
   },
   badgeIcon: { fontSize: 28 },
-  badgeName: { ...typography.smallMedium, color: colors.text.primary, textAlign: 'center' },
-  badgeObj: { ...typography.caption, color: colors.text.muted, textAlign: 'center', maxWidth: 80 },
+  badgeName: { ...typography.smallMedium, color: C.primary, textAlign: 'center' },
+  badgeObj: { ...typography.caption, color: C.muted, textAlign: 'center', maxWidth: 80 },
 
   settingsCard: {
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border, overflow: 'hidden', ...shadows.sm,
+    backgroundColor: C.glass, borderRadius: 20,
+    borderWidth: 1, borderColor: C.border, overflow: 'hidden',
   },
   settingsRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -495,13 +521,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   settingsIcon: { fontSize: 18, width: 24, textAlign: 'center' },
-  settingsLabel: { ...typography.body, color: colors.text.primary, flex: 1 },
+  settingsLabel: { ...typography.body, color: C.primary, flex: 1 },
   settingsRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  settingsValue: { ...typography.small, color: colors.text.muted, maxWidth: 120 },
-  settingsChevron: { fontSize: 20, color: colors.text.muted, marginLeft: 2 },
-  divider: { height: 1, backgroundColor: colors.border, marginLeft: 56 },
+  settingsValue: { ...typography.small, color: C.muted, maxWidth: 120 },
+  settingsChevron: { fontSize: 20, color: C.muted, marginLeft: 2 },
+  divider: { height: 1, backgroundColor: C.borderSubtle, marginLeft: 56 },
   sharingHint: {
-    ...typography.small, color: colors.text.muted, marginBottom: spacing.sm,
+    ...typography.small, color: C.muted, marginBottom: spacing.sm,
   },
   shareRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -509,40 +535,40 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   shareIcon: { fontSize: 18, width: 24, textAlign: 'center' },
-  shareLabel: { ...typography.body, color: colors.text.primary, flex: 1 },
+  shareLabel: { ...typography.body, color: C.primary, flex: 1 },
 
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: spacing.sm, backgroundColor: colors.surface,
-    borderRadius: radius.md, paddingVertical: spacing.md,
-    borderWidth: 1, borderColor: colors.border, ...shadows.sm,
+    gap: spacing.sm, backgroundColor: C.glass,
+    borderRadius: 20, paddingVertical: spacing.md,
+    borderWidth: 1, borderColor: C.border,
   },
   logoutIcon: { fontSize: 18 },
-  logoutText: { ...typography.bodyMedium, color: colors.text.secondary },
+  logoutText: { ...typography.bodyMedium, color: C.primary },
   deleteBtn: {
     alignItems: 'center', paddingVertical: spacing.md,
   },
-  deleteText: { ...typography.small, color: colors.danger },
+  deleteText: { ...typography.small, color: C.danger },
 });
 
 const modalStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: C.modalBg },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderBottomWidth: 1, borderBottomColor: C.border,
   },
-  cancel: { ...typography.body, color: colors.text.secondary },
-  title: { ...typography.h3, color: colors.text.primary },
-  save: { ...typography.bodyMedium, color: colors.accent },
+  cancel: { ...typography.body, color: C.secondary },
+  title: { ...typography.h3, color: C.primary },
+  save: { ...typography.bodyMedium, color: C.accent },
   body: { padding: spacing.lg },
-  label: { ...typography.smallMedium, color: colors.text.secondary, marginBottom: spacing.xs },
+  label: { ...typography.smallMedium, color: C.secondary, marginBottom: spacing.xs },
   input: {
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    ...typography.body, color: colors.text.primary,
+    backgroundColor: C.inputBg, borderWidth: 1, borderColor: C.border,
+    borderRadius: 20, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
+    ...typography.body, color: C.primary,
   },
-  inputError: { borderColor: colors.danger },
-  errorText: { ...typography.small, color: colors.danger, marginTop: spacing.xs },
-  hint: { ...typography.small, color: colors.text.muted, marginTop: spacing.sm },
+  inputError: { borderColor: C.danger },
+  errorText: { ...typography.small, color: C.danger, marginTop: spacing.xs },
+  hint: { ...typography.small, color: C.muted, marginTop: spacing.sm },
 });

@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OBJECTIVE_COLORS } from '../../constants/templates';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
 
 export default function EditObjectiveModal({ visible, onClose, objective, onSave }) {
   const [title, setTitle] = useState('');
@@ -65,7 +65,7 @@ export default function EditObjectiveModal({ visible, onClose, objective, onSave
           <Text style={styles.headerTitle}>Modifier</Text>
           <TouchableOpacity onPress={handleSave} disabled={isLoading}>
             {isLoading
-              ? <ActivityIndicator color={colors.accent} />
+              ? <ActivityIndicator color="#3b82f6" />
               : <Text style={styles.headerSave}>Enregistrer</Text>
             }
           </TouchableOpacity>
@@ -82,7 +82,7 @@ export default function EditObjectiveModal({ visible, onClose, objective, onSave
               value={title}
               onChangeText={setTitle}
               placeholder="Nom de l'objectif"
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="rgba(255,255,255,0.35)"
             />
           </View>
 
@@ -137,7 +137,7 @@ export default function EditObjectiveModal({ visible, onClose, objective, onSave
                 value={unit}
                 onChangeText={setUnit}
                 placeholder="cigarettes, verres, pages..."
-                placeholderTextColor={colors.text.muted}
+                placeholderTextColor="rgba(255,255,255,0.35)"
               />
               <Text style={styles.fieldLabel}>Objectif cible (optionnel)</Text>
               <TextInput
@@ -145,7 +145,7 @@ export default function EditObjectiveModal({ visible, onClose, objective, onSave
                 value={targetValue}
                 onChangeText={setTargetValue}
                 placeholder="ex: 5"
-                placeholderTextColor={colors.text.muted}
+                placeholderTextColor="rgba(255,255,255,0.35)"
                 keyboardType="numeric"
               />
             </>
@@ -170,7 +170,7 @@ export default function EditObjectiveModal({ visible, onClose, objective, onSave
             value={icon}
             onChangeText={setIcon}
             placeholder="🎯"
-            placeholderTextColor={colors.text.muted}
+            placeholderTextColor="rgba(255,255,255,0.35)"
             maxLength={2}
           />
 
@@ -182,40 +182,44 @@ export default function EditObjectiveModal({ visible, onClose, objective, onSave
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#0a1628' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)',
   },
-  headerBack: { ...typography.body, color: colors.text.secondary, width: 80 },
-  headerTitle: { ...typography.h3, color: colors.text.primary },
-  headerSave: { ...typography.bodyMedium, color: colors.accent, width: 80, textAlign: 'right' },
+  headerBack: { ...typography.body, color: 'rgba(255,255,255,0.7)', width: 80 },
+  headerTitle: { ...typography.h3, color: '#ffffff' },
+  headerSave: { ...typography.bodyMedium, color: '#3b82f6', width: 80, textAlign: 'right' },
   scroll: { flex: 1, paddingHorizontal: spacing.lg },
   previewRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg, marginBottom: spacing.lg,
   },
-  previewIcon: { width: 56, height: 56, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  previewIcon: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   titleInput: {
-    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    ...typography.body, color: colors.text.primary,
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
+    ...typography.body, color: '#ffffff',
   },
-  fieldLabel: { ...typography.smallMedium, color: colors.text.secondary, marginBottom: spacing.sm, marginTop: spacing.md },
+  fieldLabel: {
+    ...typography.smallMedium, color: 'rgba(255,255,255,0.7)', fontWeight: '600',
+    marginBottom: spacing.sm, marginTop: spacing.md,
+  },
   typeRow: { flexDirection: 'row', gap: spacing.sm },
   typeBtn: {
-    flex: 1, paddingVertical: spacing.sm, borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.border, alignItems: 'center', backgroundColor: colors.surface,
+    flex: 1, paddingVertical: spacing.sm, borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  typeBtnActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  typeBtnText: { ...typography.smallMedium, color: colors.text.secondary },
-  typeBtnTextActive: { color: '#fff' },
+  typeBtnActive: { backgroundColor: '#1e3a5f', borderColor: '#1e3a5f' },
+  typeBtnText: { ...typography.smallMedium, color: 'rgba(255,255,255,0.7)' },
+  typeBtnTextActive: { color: '#ffffff' },
   input: {
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    ...typography.body, color: colors.text.primary,
+    backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
+    ...typography.body, color: '#ffffff',
   },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   colorDot: { width: 32, height: 32, borderRadius: 16 },
-  colorDotSelected: { borderWidth: 3, borderColor: colors.text.primary },
+  colorDotSelected: { borderWidth: 3, borderColor: '#ffffff' },
 });

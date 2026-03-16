@@ -5,14 +5,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
 
 const STATUS_CONFIG = {
-  pending:   { color: colors.warning,        bg: colors.warningLight,  label: 'En attente',  emoji: '⏳' },
-  accepted:  { color: colors.success,        bg: colors.successLight,  label: 'Accepté',     emoji: '✅' },
-  declined:  { color: colors.danger,         bg: colors.dangerLight,   label: 'Refusé',      emoji: '❌' },
-  active:    { color: colors.accent,         bg: colors.accentLight,   label: 'En cours',    emoji: '🔥' },
-  completed: { color: colors.text.secondary, bg: colors.border,        label: 'Terminé',     emoji: '🏁' },
+  pending:   { color: '#fdcb6e',              bg: 'rgba(253,203,110,0.15)', label: 'En attente',  emoji: '⏳' },
+  accepted:  { color: '#00b894',              bg: 'rgba(0,184,148,0.15)',   label: 'Accepté',     emoji: '✅' },
+  declined:  { color: '#ff7675',              bg: 'rgba(255,118,117,0.15)', label: 'Refusé',      emoji: '❌' },
+  active:    { color: '#3b82f6',              bg: 'rgba(59,130,246,0.15)',  label: 'En cours',    emoji: '🔥' },
+  completed: { color: 'rgba(255,255,255,0.7)', bg: 'rgba(255,255,255,0.1)', label: 'Terminé',     emoji: '🏁' },
 };
 
 export default function DuelDetailModal({
@@ -73,7 +73,7 @@ export default function DuelDetailModal({
             <PlayerChip
               username={challenger?.username}
               label="Challenger"
-              color={colors.accent}
+              color="#3b82f6"
             />
             <View style={styles.vsCenter}>
               <Text style={styles.vsText}>VS</Text>
@@ -81,7 +81,7 @@ export default function DuelDetailModal({
             <PlayerChip
               username={challenged?.username}
               label="Challengé"
-              color={colors.warning}
+              color="#fdcb6e"
               alignRight
             />
           </View>
@@ -114,8 +114,8 @@ export default function DuelDetailModal({
                   )}
                 </View>
                 {daysInfo && (
-                  <View style={[styles.daysChip, { backgroundColor: colors.accentLight }]}>
-                    <Text style={[styles.daysChipText, { color: colors.accent }]}>
+                  <View style={styles.daysChip}>
+                    <Text style={styles.daysChipText}>
                       ⏱  {daysInfo}
                     </Text>
                   </View>
@@ -134,7 +134,7 @@ export default function DuelDetailModal({
 
             {/* Contexte selon statut */}
             {duel.status === 'accepted' && (
-              <View style={[styles.infoCard, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
+              <View style={[styles.infoCard, { backgroundColor: 'rgba(0,184,148,0.15)', borderColor: '#00b894' }]}>
                 <Text style={styles.infoCardTitle}>✅  Défi accepté !</Text>
                 <Text style={styles.contextText}>
                   Ajoute "{duel.title}" à ton dashboard et coche-le chaque jour.
@@ -144,7 +144,7 @@ export default function DuelDetailModal({
             )}
 
             {isPendingForMe && (
-              <View style={[styles.infoCard, { backgroundColor: colors.warningLight, borderColor: colors.warning }]}>
+              <View style={[styles.infoCard, { backgroundColor: 'rgba(253,203,110,0.15)', borderColor: '#fdcb6e' }]}>
                 <Text style={styles.infoCardTitle}>⏳  Tu as été défié !</Text>
                 <Text style={styles.contextText}>
                   {challenger?.username} te lance un défi. Accepte-le pour vous motiver ensemble !
@@ -153,7 +153,7 @@ export default function DuelDetailModal({
             )}
 
             {duel.status === 'declined' && (
-              <View style={[styles.infoCard, { backgroundColor: colors.dangerLight, borderColor: colors.danger }]}>
+              <View style={[styles.infoCard, { backgroundColor: 'rgba(255,118,117,0.15)', borderColor: '#ff7675' }]}>
                 <Text style={styles.contextText}>Ce défi a été refusé.</Text>
               </View>
             )}
@@ -209,14 +209,14 @@ function PlayerChip({ username, label, color, alignRight = false }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#0a1628' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)',
   },
-  closeBtn: { ...typography.body, color: colors.text.secondary, width: 32 },
-  headerTitle: { ...typography.h3, color: colors.text.primary },
+  closeBtn: { ...typography.body, color: 'rgba(255,255,255,0.7)', width: 32 },
+  headerTitle: { ...typography.h3, color: '#ffffff' },
 
   heroSection: {
     alignItems: 'center', paddingVertical: spacing.xl,
@@ -224,23 +224,24 @@ const styles = StyleSheet.create({
   },
   iconCircle: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: colors.accentLight,
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)',
     alignItems: 'center', justifyContent: 'center',
   },
   heroIcon: { fontSize: 40 },
-  heroTitle: { ...typography.h2, color: colors.text.primary, textAlign: 'center' },
+  heroTitle: { ...typography.h2, color: '#ffffff', textAlign: 'center' },
   statusPill: {
     paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
-    borderRadius: radius.full,
+    borderRadius: 20,
   },
   statusPillText: { ...typography.smallMedium },
 
   vsCard: {
     flexDirection: 'row', alignItems: 'center',
     marginHorizontal: spacing.lg, marginBottom: spacing.md,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    padding: spacing.md, ...shadows.sm,
+    backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    padding: spacing.md,
   },
   playerChip: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   playerChipRight: { flexDirection: 'row-reverse' },
@@ -249,46 +250,47 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   playerAvatarText: { fontSize: 18, fontWeight: '700' },
-  playerName: { ...typography.bodyMedium, color: colors.text.primary },
+  playerName: { ...typography.bodyMedium, color: '#ffffff' },
   playerLabel: { ...typography.caption },
   vsCenter: { paddingHorizontal: spacing.md },
-  vsText: { ...typography.h3, color: colors.text.muted },
+  vsText: { ...typography.h3, color: 'rgba(255,255,255,0.4)' },
 
   infoSection: { paddingHorizontal: spacing.lg, gap: spacing.md, paddingBottom: spacing.lg },
   infoCard: {
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
+    backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
     padding: spacing.md, gap: spacing.sm,
   },
-  infoCardTitle: { ...typography.bodyMedium, color: colors.text.primary },
+  infoCardTitle: { ...typography.bodyMedium, color: '#ffffff' },
   datesRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   dateBlock: { gap: 2 },
-  dateLabel: { ...typography.caption, color: colors.text.muted },
-  dateValue: { ...typography.bodyMedium, color: colors.text.primary },
-  dateSeparator: { ...typography.body, color: colors.text.muted },
+  dateLabel: { ...typography.caption, color: 'rgba(255,255,255,0.4)' },
+  dateValue: { ...typography.bodyMedium, color: '#ffffff' },
+  dateSeparator: { ...typography.body, color: 'rgba(255,255,255,0.4)' },
   daysChip: {
     alignSelf: 'flex-start', paddingHorizontal: spacing.sm,
-    paddingVertical: 4, borderRadius: radius.full,
+    paddingVertical: 4, borderRadius: 20,
+    backgroundColor: 'rgba(59,130,246,0.15)',
   },
-  daysChipText: { ...typography.smallMedium },
-  descText: { ...typography.body, color: colors.text.secondary, fontStyle: 'italic' },
-  descAuthor: { ...typography.caption, color: colors.text.muted },
-  contextText: { ...typography.body, color: colors.text.secondary },
+  daysChipText: { ...typography.smallMedium, color: '#3b82f6' },
+  descText: { ...typography.body, color: 'rgba(255,255,255,0.7)', fontStyle: 'italic' },
+  descAuthor: { ...typography.caption, color: 'rgba(255,255,255,0.4)' },
+  contextText: { ...typography.body, color: 'rgba(255,255,255,0.7)' },
   createdAt: {
-    ...typography.caption, color: colors.text.muted,
+    ...typography.caption, color: 'rgba(255,255,255,0.4)',
     textAlign: 'center', marginTop: spacing.sm,
   },
 
   actions: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm },
   acceptBtn: {
-    backgroundColor: colors.success, borderRadius: radius.md,
+    backgroundColor: '#00b894', borderRadius: 20,
     paddingVertical: spacing.md, alignItems: 'center',
   },
-  acceptBtnText: { ...typography.bodyMedium, color: '#fff' },
+  acceptBtnText: { ...typography.bodyMedium, color: '#fff', fontWeight: 'bold' },
   declineBtn: {
-    backgroundColor: colors.surface, borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20,
     paddingVertical: spacing.md, alignItems: 'center',
-    borderWidth: 1, borderColor: colors.danger,
+    borderWidth: 1, borderColor: '#ff7675',
   },
-  declineBtnText: { ...typography.bodyMedium, color: colors.danger },
+  declineBtnText: { ...typography.bodyMedium, color: '#ff7675' },
 });

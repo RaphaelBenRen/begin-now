@@ -7,7 +7,8 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import useAuthStore from '../../store/authStore';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
+import GradientBackground from '../../components/ui/GradientBackground';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -35,73 +36,77 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.inner}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Begin Now</Text>
-          <Text style={styles.subtitle}>Reprends le contrôle, un jour à la fois.</Text>
-        </View>
-
-        {/* Form */}
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="ton@email.com"
-              placeholderTextColor={colors.text.muted}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+    <GradientBackground>
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.inner}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.brandTitle}>Begin Now</Text>
+            <Text style={styles.subtitle}>Reprends le contrôle, un jour à la fois.</Text>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mot de passe</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor={colors.text.muted}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+          {/* Glass Card Form */}
+          <View style={styles.glassCard}>
+            <Text style={styles.cardTitle}>Connexion</Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="ton@email.com"
+                placeholderTextColor="rgba(255,255,255,0.35)"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Mot de passe</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor="rgba(255,255,255,0.35)"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.buttonText}>Se connecter</Text>
+              }
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Se connecter</Text>
-            }
-          </TouchableOpacity>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Pas encore de compte ? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.footerLink}>S'inscrire</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Pas encore de compte ? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+              <Text style={styles.footerLink}>S'inscrire</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'transparent',
   },
   inner: {
     flex: 1,
@@ -109,42 +114,57 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
+    alignItems: 'center',
     marginBottom: spacing.xxl,
   },
-  title: {
-    ...typography.h1,
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
+  brandTitle: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 1,
+    marginBottom: spacing.xs,
   },
   subtitle: {
     ...typography.body,
-    color: colors.text.secondary,
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
   },
-  form: {
+  glassCard: {
+    backgroundColor: 'rgba(15,25,50,0.95)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    padding: 20,
     gap: spacing.md,
     marginBottom: spacing.xl,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: spacing.xs,
   },
   inputGroup: {
     gap: spacing.xs,
   },
   label: {
-    ...typography.smallMedium,
-    color: colors.text.secondary,
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.7)',
   },
   input: {
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    padding: 15,
     ...typography.body,
-    color: colors.text.primary,
+    color: '#ffffff',
   },
   button: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
+    backgroundColor: '#3b82f6',
+    borderRadius: 20,
+    paddingVertical: 16,
     alignItems: 'center',
     marginTop: spacing.sm,
   },
@@ -153,7 +173,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     ...typography.bodyMedium,
-    color: '#fff',
+    color: '#ffffff',
+    fontWeight: '700',
   },
   footer: {
     flexDirection: 'row',
@@ -161,10 +182,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     ...typography.body,
-    color: colors.text.secondary,
+    color: 'rgba(255,255,255,0.7)',
   },
   footerLink: {
     ...typography.bodyMedium,
-    color: colors.accent,
+    color: '#3b82f6',
+    fontWeight: '600',
   },
 });

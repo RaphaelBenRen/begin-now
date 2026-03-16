@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OBJECTIVE_TEMPLATES, OBJECTIVE_COLORS } from '../../constants/templates';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
 
 const STEPS = { SELECT: 'select', CUSTOMIZE: 'customize' };
 
@@ -112,10 +112,10 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
               {OBJECTIVE_TEMPLATES.map((template) => (
                 <TouchableOpacity
                   key={template.slug}
-                  style={[styles.templateCard, { borderColor: template.color + '40' }]}
+                  style={styles.templateCard}
                   onPress={() => handleSelectTemplate(template)}
                 >
-                  <View style={[styles.templateIconBg, { backgroundColor: template.color + '20' }]}>
+                  <View style={styles.templateIconBg}>
                     <Text style={styles.templateIcon}>{template.icon}</Text>
                   </View>
                   <Text style={styles.templateName} numberOfLines={2}>{template.name}</Text>
@@ -148,7 +148,7 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
                 value={title}
                 onChangeText={setTitle}
                 placeholder="Nom de l'objectif"
-                placeholderTextColor={colors.text.muted}
+                placeholderTextColor="rgba(255,255,255,0.35)"
               />
             </View>
 
@@ -203,7 +203,7 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
                   value={unit}
                   onChangeText={setUnit}
                   placeholder="cigarettes, verres, pages..."
-                  placeholderTextColor={colors.text.muted}
+                  placeholderTextColor="rgba(255,255,255,0.35)"
                 />
                 <Text style={styles.fieldLabel}>Objectif cible (optionnel)</Text>
                 <TextInput
@@ -211,7 +211,7 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
                   value={targetValue}
                   onChangeText={setTargetValue}
                   placeholder="ex: 5"
-                  placeholderTextColor={colors.text.muted}
+                  placeholderTextColor="rgba(255,255,255,0.35)"
                   keyboardType="numeric"
                 />
               </>
@@ -238,7 +238,7 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
                   value={icon}
                   onChangeText={setIcon}
                   placeholder="🎯"
-                  placeholderTextColor={colors.text.muted}
+                  placeholderTextColor="rgba(255,255,255,0.35)"
                   maxLength={2}
                 />
               </>
@@ -246,7 +246,7 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
 
             {/* Submit */}
             <TouchableOpacity
-              style={[styles.submitBtn, { backgroundColor: selectedColor }, isLoading && { opacity: 0.6 }]}
+              style={[styles.submitBtn, isLoading && { opacity: 0.6 }]}
               onPress={handleSubmit}
               disabled={isLoading}
             >
@@ -263,65 +263,73 @@ export default function CreateObjectiveModal({ visible, onClose, onSubmit }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#0a1628' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)',
   },
-  headerBack: { ...typography.body, color: colors.accent, width: 60 },
-  headerTitle: { ...typography.h3, color: colors.text.primary },
+  headerBack: { ...typography.body, color: '#3b82f6', width: 60 },
+  headerTitle: { ...typography.h3, color: '#ffffff' },
   scroll: { flex: 1, paddingHorizontal: spacing.lg },
   sectionLabel: {
-    ...typography.smallMedium, color: colors.text.secondary,
+    ...typography.smallMedium, color: 'rgba(255,255,255,0.4)',
     marginTop: spacing.lg, marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: 0.5,
   },
   templateGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   templateCard: {
-    width: '47%', backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, padding: spacing.md, gap: spacing.sm,
+    width: '47%', backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', padding: spacing.md, gap: spacing.sm,
   },
-  templateIconBg: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  templateIconBg: {
+    width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
   templateIcon: { fontSize: 22 },
-  templateName: { ...typography.bodyMedium, color: colors.text.primary },
-  templateType: { ...typography.caption, color: colors.text.muted },
+  templateName: { ...typography.bodyMedium, color: '#ffffff' },
+  templateType: { ...typography.caption, color: 'rgba(255,255,255,0.4)' },
   customCard: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border, padding: spacing.md, marginBottom: spacing.xl,
+    backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', padding: spacing.md, marginBottom: spacing.xl,
   },
   customIcon: { fontSize: 28 },
-  customTitle: { ...typography.bodyMedium, color: colors.text.primary },
-  customSub: { ...typography.small, color: colors.text.secondary },
+  customTitle: { ...typography.bodyMedium, color: '#ffffff' },
+  customSub: { ...typography.small, color: 'rgba(255,255,255,0.7)' },
   previewRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg, marginBottom: spacing.lg,
   },
-  previewIcon: { width: 56, height: 56, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  previewIcon: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   titleInput: {
-    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    ...typography.body, color: colors.text.primary,
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
+    ...typography.body, color: '#ffffff',
   },
-  fieldLabel: { ...typography.smallMedium, color: colors.text.secondary, marginBottom: spacing.sm, marginTop: spacing.md },
+  fieldLabel: {
+    ...typography.smallMedium, color: 'rgba(255,255,255,0.7)', fontWeight: '600',
+    marginBottom: spacing.sm, marginTop: spacing.md,
+  },
   typeRow: { flexDirection: 'row', gap: spacing.sm },
   typeBtn: {
-    flex: 1, paddingVertical: spacing.sm, borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.border, alignItems: 'center', backgroundColor: colors.surface,
+    flex: 1, paddingVertical: spacing.sm, borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  typeBtnActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  typeBtnText: { ...typography.smallMedium, color: colors.text.secondary },
-  typeBtnTextActive: { color: '#fff' },
+  typeBtnActive: { backgroundColor: '#1e3a5f', borderColor: '#1e3a5f' },
+  typeBtnText: { ...typography.smallMedium, color: 'rgba(255,255,255,0.7)' },
+  typeBtnTextActive: { color: '#ffffff' },
   input: {
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    ...typography.body, color: colors.text.primary,
+    backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
+    ...typography.body, color: '#ffffff',
   },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   colorDot: { width: 32, height: 32, borderRadius: 16 },
-  colorDotSelected: { borderWidth: 3, borderColor: colors.text.primary },
+  colorDotSelected: { borderWidth: 3, borderColor: '#ffffff' },
   submitBtn: {
-    borderRadius: radius.md, paddingVertical: spacing.md,
+    borderRadius: 20, paddingVertical: spacing.md,
     alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.xxl,
+    backgroundColor: '#3b82f6',
   },
-  submitText: { ...typography.bodyMedium, color: '#fff' },
+  submitText: { ...typography.bodyMedium, color: '#ffffff', fontWeight: '700' },
 });

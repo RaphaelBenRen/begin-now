@@ -3,7 +3,6 @@ import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
 import { format, eachDayOfInterval, subDays, subWeeks, subMonths, parseISO, differenceInDays, getDaysInMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -12,6 +11,8 @@ import useStatsStore from '../../store/statsStore';
 import useDuelsStore from '../../store/duelsStore';
 import useAuthStore from '../../store/authStore';
 import DuelProgressModal from '../../components/modals/DuelProgressModal';
+import GradientBackground from '../../components/ui/GradientBackground';
+import GlassCard from '../../components/ui/GlassCard';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 
 const PERIODS = [
@@ -222,7 +223,7 @@ export default function StatsScreen() {
   const isQuantifiable = selectedObj?.type === 'quantifiable';
 
   return (
-    <SafeAreaView style={styles.container}>
+    <GradientBackground style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -288,27 +289,24 @@ export default function StatsScreen() {
                 <SummaryCard
                   label="Taux de réussite"
                   value={`${stats.summary.successRate}%`}
-                  color={stats.summary.successRate >= 70 ? colors.success : colors.accent}
-                  bg={stats.summary.successRate >= 70 ? colors.successLight : colors.accentLight}
+                  color={stats.summary.successRate >= 70 ? '#00b894' : colors.accent}
                 />
                 <SummaryCard
                   label="Jours complétés"
                   value={String(stats.summary.done)}
                   color={colors.accent}
-                  bg={colors.accentLight}
                 />
                 <SummaryCard
                   label="Total logs"
                   value={String(stats.summary.total)}
-                  color={colors.text.secondary}
-                  bg={colors.border}
+                  color="rgba(255,255,255,0.7)"
                 />
               </View>
             )}
 
             {/* Courbe de complétion */}
             {completionData.length > 0 && (
-              <View style={styles.card}>
+              <GlassCard style={styles.card}>
                 <Text style={styles.cardTitle}>
                   Taux de complétion {selectedObj ? `— ${selectedObj.icon} ${selectedObj.title}` : ''}
                 </Text>
@@ -321,12 +319,12 @@ export default function StatsScreen() {
                   scrollable={period === 'year'}
                   minSpacing={period === 'year' ? 75 : 0}
                 />
-              </View>
+              </GlassCard>
             )}
 
             {/* Graphique ligne — objectif quantifiable */}
             {isQuantifiable && lineData.length > 0 && (
-              <View style={styles.card}>
+              <GlassCard style={styles.card}>
                 <Text style={styles.cardTitle}>
                   {selectedObj.icon} {selectedObj.title} ({selectedObj.unit})
                 </Text>
@@ -338,12 +336,12 @@ export default function StatsScreen() {
                   scrollable={period === 'year'}
                   minSpacing={period === 'year' ? 75 : 0}
                 />
-              </View>
+              </GlassCard>
             )}
 
             {/* Résumé quantifiable */}
             {isQuantifiable && quantSummary && (
-              <View style={styles.card}>
+              <GlassCard style={styles.card}>
                 <Text style={styles.cardTitle}>
                   Résumé — {selectedObj.icon} {selectedObj.title}
                 </Text>
@@ -352,35 +350,31 @@ export default function StatsScreen() {
                     label={`Total${quantSummary.unit ? ` (${quantSummary.unit})` : ''}`}
                     value={String(quantSummary.total)}
                     color={selectedObj.color || colors.accent}
-                    bg={(selectedObj.color || colors.accent) + '15'}
                   />
                   <SummaryCard
                     label="Moyenne/jour"
                     value={String(quantSummary.avg)}
                     color={colors.accent}
-                    bg={colors.accentLight}
                   />
                 </View>
                 <View style={[styles.summaryRow, { marginTop: spacing.sm }]}>
                   <SummaryCard
                     label="Maximum"
                     value={String(quantSummary.max)}
-                    color={colors.danger}
-                    bg={colors.dangerLight}
+                    color="#ff7675"
                   />
                   <SummaryCard
                     label="Minimum"
                     value={String(quantSummary.min)}
-                    color={colors.success}
-                    bg={colors.successLight}
+                    color="#00b894"
                   />
                 </View>
-              </View>
+              </GlassCard>
             )}
 
             {/* Streaks */}
             {streaks.length > 0 && (
-              <View style={styles.card}>
+              <GlassCard style={styles.card}>
                 <Text style={styles.cardTitle}>Streaks</Text>
                 <View style={styles.streakList}>
                   {streaks
@@ -390,12 +384,12 @@ export default function StatsScreen() {
                       <StreakRow key={s.id} streak={s} />
                     ))}
                 </View>
-              </View>
+              </GlassCard>
             )}
 
             {/* Historique récent */}
             {stats?.logs?.length > 0 && (
-              <View style={[styles.card, { marginBottom: spacing.xl }]}>
+              <GlassCard style={[styles.card, { marginBottom: spacing.xl }]}>
                 <Text style={styles.cardTitle}>Historique récent</Text>
                 {[...stats.logs]
                   .sort((a, b) => b.log_date.localeCompare(a.log_date))
@@ -403,7 +397,7 @@ export default function StatsScreen() {
                   .map((log) => (
                     <HistoryRow key={log.id} log={log} objectives={objectives} />
                   ))}
-              </View>
+              </GlassCard>
             )}
 
             {!stats?.logs?.length && !isLoading && (
@@ -424,7 +418,7 @@ export default function StatsScreen() {
           onOpenDuel={setDuelProgress}
         />
 
-        <View style={{ height: spacing.xxl }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       <DuelProgressModal
@@ -433,7 +427,7 @@ export default function StatsScreen() {
         currentUserId={user?.id}
         onClose={() => setDuelProgress(null)}
       />
-    </SafeAreaView>
+    </GradientBackground>
   );
 }
 
@@ -545,7 +539,7 @@ function SmoothChart({ data, screenWidth, accentColor, suffix = '', maxVal, scro
               {
                 left: pt.x - 20,
                 top: pt.y - 22,
-                color: pt.isToday ? accentColor : colors.text.secondary,
+                color: pt.isToday ? accentColor : 'rgba(255,255,255,0.7)',
                 fontWeight: pt.isToday ? '700' : '600',
               },
             ]}
@@ -565,7 +559,7 @@ function SmoothChart({ data, screenWidth, accentColor, suffix = '', maxVal, scro
               {
                 left: pt.x - 20,
                 top: GRAPH_HEIGHT + 4,
-                color: pt.isToday ? accentColor : colors.text.muted,
+                color: pt.isToday ? accentColor : 'rgba(255,255,255,0.4)',
                 fontWeight: pt.isToday ? '700' : '500',
               },
             ]}
@@ -625,7 +619,7 @@ const chartStyles = StyleSheet.create({
   },
   yLabelText: {
     fontSize: 10,
-    color: colors.text.muted,
+    color: 'rgba(255,255,255,0.4)',
   },
   graphArea: {
     flex: 1,
@@ -636,7 +630,7 @@ const chartStyles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   scoreLabel: {
     position: 'absolute',
@@ -654,9 +648,9 @@ const chartStyles = StyleSheet.create({
 
 // ─── Composants internes ────────────────────────────────────────
 
-function SummaryCard({ label, value, color, bg }) {
+function SummaryCard({ label, value, color }) {
   return (
-    <View style={[styles.summaryCard, { backgroundColor: bg }]}>
+    <View style={styles.summaryCard}>
       <Text style={[styles.summaryValue, { color }]}>{value}</Text>
       <Text style={styles.summaryLabel}>{label}</Text>
     </View>
@@ -720,14 +714,14 @@ function DuelsSection({ duels, currentUserId, onOpenDuel }) {
   const finished = duels.filter((d) => ['declined', 'completed'].includes(d.status));
 
   return (
-    <View style={[styles.card, { marginTop: spacing.md }]}>
+    <GlassCard style={[styles.card, { marginTop: spacing.md }]}>
       <Text style={styles.cardTitle}>⚔️  Défis</Text>
 
       {/* Résumé chiffré */}
       <View style={styles.duelSummaryRow}>
-        <DuelStat value={active.length} label="Actifs" color={colors.success} />
-        <DuelStat value={pending.length} label="En attente" color={colors.warning} />
-        <DuelStat value={finished.length} label="Terminés" color={colors.text.muted} />
+        <DuelStat value={active.length} label="Actifs" color="#00b894" />
+        <DuelStat value={pending.length} label="En attente" color="#fdcb6e" />
+        <DuelStat value={finished.length} label="Terminés" color="rgba(255,255,255,0.4)" />
       </View>
 
       {/* Défis actifs cliquables */}
@@ -758,7 +752,7 @@ function DuelsSection({ duels, currentUserId, onOpenDuel }) {
                   {daysLeft !== null && (
                     <Text style={[
                       styles.duelDays,
-                      { color: daysLeft <= 3 ? colors.danger : colors.text.muted },
+                      { color: daysLeft <= 3 ? '#ff7675' : 'rgba(255,255,255,0.4)' },
                     ]}>
                       {daysLeft > 0 ? `J-${daysLeft}` : daysLeft === 0 ? 'Dernier jour' : 'Terminé'}
                     </Text>
@@ -774,7 +768,7 @@ function DuelsSection({ duels, currentUserId, onOpenDuel }) {
           Aucun défi actif — défie un ami depuis l'onglet Amis !
         </Text>
       )}
-    </View>
+    </GlassCard>
   );
 }
 
@@ -790,30 +784,48 @@ function DuelStat({ value, label, color }) {
 // ─── Styles ────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.sm },
-  title: { ...typography.h2, color: colors.text.primary },
+  container: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  title: {
+    ...typography.h2,
+    color: '#ffffff',
+  },
 
+  // Period selector
   periodRow: {
     flexDirection: 'row',
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.2)',
     padding: 4,
   },
   periodBtn: {
     flex: 1,
     paddingVertical: spacing.sm,
-    borderRadius: radius.md,
+    borderRadius: 16,
     alignItems: 'center',
   },
-  periodBtnActive: { backgroundColor: colors.accent },
-  periodText: { ...typography.smallMedium, color: colors.text.secondary },
-  periodTextActive: { color: '#fff' },
+  periodBtnActive: {
+    backgroundColor: '#3b82f6',
+  },
+  periodText: {
+    ...typography.smallMedium,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  periodTextActive: {
+    color: '#ffffff',
+  },
 
+  // Objective chips
   objectiveFilters: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
@@ -824,15 +836,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderRadius: radius.full,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  objChipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  objChipText: { ...typography.smallMedium, color: colors.text.secondary },
-  objChipTextActive: { color: '#fff' },
+  objChipActive: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  objChipText: {
+    ...typography.smallMedium,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  objChipTextActive: {
+    color: '#ffffff',
+  },
 
+  // Summary cards
   summaryRow: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
@@ -841,105 +862,174 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    borderRadius: radius.lg,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     padding: spacing.md,
     alignItems: 'center',
     gap: 4,
   },
-  summaryValue: { ...typography.h2 },
-  summaryLabel: { ...typography.caption, color: colors.text.secondary, textAlign: 'center' },
+  summaryValue: {
+    ...typography.h2,
+  },
+  summaryLabel: {
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
+  },
 
+  // GlassCard overrides
   card: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: 'rgba(15,25,50,0.95)',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.2)',
     padding: spacing.md,
     ...shadows.sm,
   },
   cardTitle: {
     ...typography.bodyMedium,
-    color: colors.text.primary,
+    color: '#ffffff',
     marginBottom: spacing.md,
   },
-  chartWrapper: { alignItems: 'center', overflow: 'hidden' },
+  chartWrapper: {
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
 
+  // Streaks
   streakList: { gap: spacing.sm },
   streakRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
     gap: spacing.md,
   },
   streakIcon: { fontSize: 22 },
   streakInfo: { flex: 1 },
-  streakName: { ...typography.bodyMedium, color: colors.text.primary },
-  streakSub: { ...typography.caption, color: colors.text.muted },
+  streakName: {
+    ...typography.bodyMedium,
+    color: '#ffffff',
+  },
+  streakSub: {
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.4)',
+  },
   streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   streakFire: { fontSize: 16 },
-  streakNum: { ...typography.h3, color: colors.text.primary },
+  streakNum: {
+    ...typography.h3,
+    color: '#ffffff',
+  },
 
+  // History
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
     gap: spacing.md,
   },
   historyIcon: { fontSize: 20 },
   historyInfo: { flex: 1 },
-  historyName: { ...typography.bodyMedium, color: colors.text.primary },
-  historyDate: { ...typography.caption, color: colors.text.muted, textTransform: 'capitalize' },
+  historyName: {
+    ...typography.bodyMedium,
+    color: '#ffffff',
+  },
+  historyDate: {
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.4)',
+    textTransform: 'capitalize',
+  },
   statusBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
-  statusDone: { backgroundColor: colors.successLight },
-  statusFailed: { backgroundColor: colors.dangerLight },
-  statusSkipped: { backgroundColor: colors.warningLight },
-  statusText: { fontSize: 13, fontWeight: '700' },
+  statusDone: { backgroundColor: '#00b894' },
+  statusFailed: { backgroundColor: '#ff7675' },
+  statusSkipped: { backgroundColor: '#fdcb6e' },
+  statusText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
 
-  empty: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },
-  emptyText: { ...typography.h3, color: colors.text.secondary },
-  emptySubText: { ...typography.body, color: colors.text.muted, textAlign: 'center', paddingHorizontal: spacing.xl },
+  // Empty state
+  empty: {
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+    gap: spacing.sm,
+  },
+  emptyText: {
+    ...typography.h3,
+    color: '#ffffff',
+  },
+  emptySubText: {
+    ...typography.body,
+    color: 'rgba(255,255,255,0.4)',
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+  },
 
+  // Duels
   duelSummaryRow: {
     flexDirection: 'row',
     marginBottom: spacing.md,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   duelStatBlock: { flex: 1, alignItems: 'center' },
   duelStatValue: { ...typography.h3 },
-  duelStatLabel: { ...typography.caption, color: colors.text.muted, marginTop: 2 },
+  duelStatLabel: {
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 2,
+  },
 
   duelList: { gap: spacing.sm },
   duelCard: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    backgroundColor: colors.background, borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
     padding: spacing.md,
   },
   duelIconCircle: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.accentLight,
-    alignItems: 'center', justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   duelInfo: { flex: 1 },
-  duelTitle: { ...typography.bodyMedium, color: colors.text.primary },
-  duelOpponent: { ...typography.caption, color: colors.text.secondary },
+  duelTitle: {
+    ...typography.bodyMedium,
+    color: '#ffffff',
+  },
+  duelOpponent: {
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.7)',
+  },
   duelRight: { alignItems: 'flex-end', gap: 2 },
   duelDays: { ...typography.caption, fontWeight: '600' },
-  duelChevron: { fontSize: 20, color: colors.text.muted },
-  duelEmptyText: { ...typography.small, color: colors.text.muted, textAlign: 'center', paddingVertical: spacing.sm },
+  duelChevron: { fontSize: 20, color: 'rgba(255,255,255,0.4)' },
+  duelEmptyText: {
+    ...typography.small,
+    color: 'rgba(255,255,255,0.4)',
+    textAlign: 'center',
+    paddingVertical: spacing.sm,
+  },
 });

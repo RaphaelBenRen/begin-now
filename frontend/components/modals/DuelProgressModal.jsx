@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, parseISO, eachDayOfInterval, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
 import useDuelsStore from '../../store/duelsStore';
 
 export default function DuelProgressModal({ visible, onClose, duel, currentUserId }) {
@@ -79,19 +79,19 @@ export default function DuelProgressModal({ visible, onClose, duel, currentUserI
         </View>
 
         {isLoading ? (
-          <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.xxl }} />
+          <ActivityIndicator color="#3b82f6" style={{ marginTop: spacing.xxl }} />
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />}
           >
             {/* VS Header */}
             <View style={styles.vsRow}>
-              <PlayerStats player={myData} label="Moi" color={colors.accent} />
+              <PlayerStats player={myData} label="Moi" color="#3b82f6" />
               <View style={styles.vsCenter}>
                 <Text style={styles.vsText}>VS</Text>
               </View>
-              <PlayerStats player={opponentData} label={opponentData?.username} color={colors.warning} alignRight />
+              <PlayerStats player={opponentData} label={opponentData?.username} color="#fdcb6e" alignRight />
             </View>
 
             {/* Action du jour */}
@@ -132,9 +132,9 @@ export default function DuelProgressModal({ visible, onClose, duel, currentUserI
               <View style={styles.gridsSection}>
                 <Text style={styles.gridsSectionTitle}>Historique — 21 derniers jours</Text>
                 <View style={styles.gridsRow}>
-                  <CalendarGrid logs={myData?.logs || []} color={colors.accent} />
+                  <CalendarGrid logs={myData?.logs || []} color="#3b82f6" />
                   <View style={styles.gridsDivider} />
-                  <CalendarGrid logs={opponentData?.logs || []} color={colors.warning} />
+                  <CalendarGrid logs={opponentData?.logs || []} color="#fdcb6e" />
                 </View>
               </View>
             )}
@@ -206,7 +206,7 @@ function CalendarGrid({ logs, color }) {
             key={key}
             style={[
               styles.calDay,
-              status === 'done' && { backgroundColor: color },
+              status === 'done' && { backgroundColor: 'rgba(0,184,148,0.3)' },
               status === 'skipped' && styles.calDaySkipped,
               !status && styles.calDayEmpty,
             ]}
@@ -235,21 +235,21 @@ function StatRow({ label, myValue, oppValue, suffix = '', higherIsBetter = true 
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#0a1628' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)',
   },
-  closeBtn: { ...typography.body, color: colors.text.secondary, width: 32 },
-  headerTitle: { ...typography.h3, color: colors.text.primary, flex: 1, textAlign: 'center' },
+  closeBtn: { ...typography.body, color: 'rgba(255,255,255,0.7)', width: 32 },
+  headerTitle: { ...typography.h3, color: '#ffffff', flex: 1, textAlign: 'center' },
 
   vsRow: {
     flexDirection: 'row', alignItems: 'center',
     marginHorizontal: spacing.lg, marginTop: spacing.lg,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    padding: spacing.md, ...shadows.sm,
+    backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    padding: spacing.md,
   },
   playerStats: { flex: 1, alignItems: 'flex-start', gap: 4 },
   playerStatsRight: { alignItems: 'flex-end' },
@@ -258,65 +258,65 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   playerAvatarText: { fontSize: 20, fontWeight: '700' },
-  playerName: { ...typography.bodyMedium, color: colors.text.primary },
+  playerName: { ...typography.bodyMedium, color: '#ffffff' },
   playerScore: { ...typography.caption },
   vsCenter: { paddingHorizontal: spacing.md },
-  vsText: { ...typography.h3, color: colors.text.muted },
+  vsText: { ...typography.h3, color: 'rgba(255,255,255,0.4)' },
 
   todaySection: {
     marginHorizontal: spacing.lg, marginTop: spacing.lg,
   },
-  todayTitle: { ...typography.bodyMedium, color: colors.text.secondary, marginBottom: spacing.sm },
+  todayTitle: { ...typography.bodyMedium, color: 'rgba(255,255,255,0.7)', marginBottom: spacing.sm },
   todayButtons: { flexDirection: 'row', gap: spacing.sm },
   doneBtn: {
-    flex: 1, backgroundColor: colors.success, borderRadius: radius.md,
+    flex: 1, backgroundColor: '#00b894', borderRadius: 20,
     paddingVertical: spacing.md, alignItems: 'center',
   },
-  doneBtnText: { ...typography.bodyMedium, color: '#fff' },
+  doneBtnText: { ...typography.bodyMedium, color: '#fff', fontWeight: 'bold' },
   skipBtn: {
-    flex: 1, backgroundColor: colors.surface, borderRadius: radius.md,
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20,
     paddingVertical: spacing.md, alignItems: 'center',
-    borderWidth: 1, borderColor: colors.danger,
+    borderWidth: 1, borderColor: '#ff7675',
   },
-  skipBtnText: { ...typography.bodyMedium, color: colors.danger },
+  skipBtnText: { ...typography.bodyMedium, color: '#ff7675' },
 
   todayDone: {
     marginHorizontal: spacing.lg, marginTop: spacing.lg,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
+    backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
     padding: spacing.md, alignItems: 'center', gap: 4,
   },
-  todayDoneText: { ...typography.bodyMedium, color: colors.text.primary },
-  todayDoneHint: { ...typography.caption, color: colors.text.muted },
+  todayDoneText: { ...typography.bodyMedium, color: '#ffffff' },
+  todayDoneHint: { ...typography.caption, color: 'rgba(255,255,255,0.4)' },
 
   gridsSection: {
     marginHorizontal: spacing.lg, marginTop: spacing.lg,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    padding: spacing.md, ...shadows.sm,
+    backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    padding: spacing.md,
   },
-  gridsSectionTitle: { ...typography.bodyMedium, color: colors.text.secondary, marginBottom: spacing.md },
+  gridsSectionTitle: { ...typography.bodyMedium, color: 'rgba(255,255,255,0.7)', marginBottom: spacing.md },
   gridsRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  gridsDivider: { width: 1, backgroundColor: colors.border, marginHorizontal: spacing.sm },
+  gridsDivider: { width: 1, backgroundColor: 'rgba(255,255,255,0.1)', marginHorizontal: spacing.sm },
   calendarGrid: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   calDay: { width: 14, height: 14, borderRadius: 3 },
-  calDaySkipped: { backgroundColor: colors.danger + '60' },
-  calDayEmpty: { backgroundColor: colors.border },
+  calDaySkipped: { backgroundColor: 'rgba(255,118,117,0.3)' },
+  calDayEmpty: { backgroundColor: 'rgba(255,255,255,0.05)' },
 
   statsSection: {
     marginHorizontal: spacing.lg, marginTop: spacing.lg,
-    backgroundColor: colors.surface, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    padding: spacing.md, ...shadows.sm,
+    backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    padding: spacing.md,
   },
-  statsSectionTitle: { ...typography.bodyMedium, color: colors.text.secondary, marginBottom: spacing.md },
+  statsSectionTitle: { ...typography.bodyMedium, color: 'rgba(255,255,255,0.7)', marginBottom: spacing.md },
   statRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: spacing.sm,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)',
   },
-  statLabel: { flex: 1, ...typography.body, color: colors.text.secondary, textAlign: 'center' },
-  statValue: { width: 60, ...typography.bodyMedium, color: colors.text.primary, textAlign: 'left' },
+  statLabel: { flex: 1, ...typography.body, color: 'rgba(255,255,255,0.7)', textAlign: 'center' },
+  statValue: { width: 60, ...typography.bodyMedium, color: '#ffffff', textAlign: 'left' },
   statValueRight: { textAlign: 'right' },
-  statWinner: { color: colors.accent },
+  statWinner: { color: '#3b82f6' },
 });

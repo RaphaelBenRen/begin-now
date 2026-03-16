@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { OBJECTIVE_TEMPLATES } from '../../constants/templates';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
 
 const DUEL_ICONS = ['⚔️', '🏆', '🔥', '💪', '🎯', '🚀', '⚡', '🌟'];
 
@@ -147,7 +147,7 @@ export default function DuelModal({ visible, onClose, friend, onSubmit }) {
               value={title}
               onChangeText={setTitle}
               placeholder="ex: Ne pas fumer pendant 30 jours"
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="rgba(255,255,255,0.35)"
             />
 
             {/* Description */}
@@ -157,7 +157,7 @@ export default function DuelModal({ visible, onClose, friend, onSubmit }) {
               value={description}
               onChangeText={setDescription}
               placeholder="Lance le défi avec un message..."
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="rgba(255,255,255,0.35)"
               multiline
               numberOfLines={3}
             />
@@ -169,7 +169,7 @@ export default function DuelModal({ visible, onClose, friend, onSubmit }) {
               value={startDate}
               onChangeText={setStartDate}
               placeholder="AAAA-MM-JJ"
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="rgba(255,255,255,0.35)"
               keyboardType="numeric"
             />
 
@@ -179,7 +179,7 @@ export default function DuelModal({ visible, onClose, friend, onSubmit }) {
               value={endDate}
               onChangeText={setEndDate}
               placeholder="AAAA-MM-JJ"
-              placeholderTextColor={colors.text.muted}
+              placeholderTextColor="rgba(255,255,255,0.35)"
               keyboardType="numeric"
             />
 
@@ -201,56 +201,57 @@ export default function DuelModal({ visible, onClose, friend, onSubmit }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#0a1628' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.2)',
   },
-  headerBack: { ...typography.body, color: colors.accent, width: 60 },
-  headerTitle: { ...typography.h3, color: colors.text.primary },
+  headerBack: { ...typography.body, color: '#3b82f6', width: 60 },
+  headerTitle: { ...typography.h3, color: '#ffffff' },
   scroll: { flex: 1, paddingHorizontal: spacing.lg },
   sectionLabel: {
-    ...typography.smallMedium, color: colors.text.secondary, textTransform: 'uppercase',
+    ...typography.smallMedium, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase',
     letterSpacing: 0.5, marginTop: spacing.lg, marginBottom: spacing.sm,
   },
   templateGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   templateCard: {
-    width: '47%', backgroundColor: colors.surface, borderRadius: radius.lg,
+    width: '47%', backgroundColor: 'rgba(15,25,50,0.95)', borderRadius: 20,
     borderWidth: 1, padding: spacing.md, gap: spacing.sm,
   },
-  templateIconBg: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  templateName: { ...typography.bodyMedium, color: colors.text.primary },
+  templateIconBg: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  templateName: { ...typography.bodyMedium, color: '#ffffff' },
   customCard: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface,
-    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: 'rgba(15,25,50,0.95)',
+    borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
     padding: spacing.md, marginBottom: spacing.xl,
   },
-  customTitle: { ...typography.bodyMedium, color: colors.text.primary },
-  customSub: { ...typography.small, color: colors.text.secondary },
+  customTitle: { ...typography.bodyMedium, color: '#ffffff' },
+  customSub: { ...typography.small, color: 'rgba(255,255,255,0.7)' },
   challengePreview: {
-    backgroundColor: colors.accentLight, borderRadius: radius.lg,
+    backgroundColor: 'rgba(59,130,246,0.15)', borderRadius: 20,
     padding: spacing.lg, alignItems: 'center', marginTop: spacing.lg, marginBottom: spacing.sm,
+    borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)',
   },
-  vsText: { ...typography.h3, color: colors.accent },
+  vsText: { ...typography.h3, color: '#3b82f6' },
   vsIcon: { fontSize: 22 },
-  fieldLabel: { ...typography.smallMedium, color: colors.text.secondary, marginTop: spacing.md, marginBottom: spacing.sm },
+  fieldLabel: { ...typography.smallMedium, color: 'rgba(255,255,255,0.7)', marginTop: spacing.md, marginBottom: spacing.sm },
   iconRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   iconBtn: {
-    width: 44, height: 44, borderRadius: radius.md, alignItems: 'center',
-    justifyContent: 'center', backgroundColor: colors.surface,
-    borderWidth: 1, borderColor: colors.border,
+    width: 44, height: 44, borderRadius: 12, alignItems: 'center',
+    justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
-  iconBtnActive: { borderColor: colors.accent, backgroundColor: colors.accentLight },
+  iconBtnActive: { borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)' },
   input: {
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    ...typography.body, color: colors.text.primary,
+    backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20, paddingHorizontal: spacing.md, paddingVertical: spacing.md,
+    ...typography.body, color: '#ffffff',
   },
   inputMultiline: { minHeight: 80, textAlignVertical: 'top' },
   submitBtn: {
-    backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: spacing.md,
+    backgroundColor: '#3b82f6', borderRadius: 20, paddingVertical: spacing.md,
     alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.xxl,
   },
-  submitText: { ...typography.bodyMedium, color: '#fff' },
+  submitText: { ...typography.bodyMedium, color: '#fff', fontWeight: 'bold' },
 });

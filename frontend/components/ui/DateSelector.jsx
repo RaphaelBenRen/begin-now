@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
 import { format, subDays, addDays, isToday, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths, isFuture } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { colors, spacing, radius, typography } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
 
 export default function DateSelector({ selectedDate, onSelectDate, loggedDates = [] }) {
   const [calendarVisible, setCalendarVisible] = useState(false);
@@ -166,9 +166,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -177,11 +177,11 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 24,
-    color: colors.text.primary,
+    color: '#ffffff',
     lineHeight: 28,
   },
   arrowTextDisabled: {
-    color: colors.text.muted,
+    color: 'rgba(255,255,255,0.3)',
   },
   dateBtn: {
     flex: 1,
@@ -189,15 +189,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
+    borderColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
     paddingVertical: spacing.sm + 2,
   },
   dateLabel: {
     ...typography.bodyMedium,
-    color: colors.text.primary,
+    color: '#ffffff',
     textTransform: 'capitalize',
   },
   calendarIcon: {
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
   todayBtnText: {
     ...typography.small,
-    color: colors.accent,
+    color: '#3b82f6',
     fontWeight: '600',
   },
 });
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
 const calStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#0a1628',
   },
   header: {
     flexDirection: 'row',
@@ -228,16 +228,16 @@ const calStyles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   closeBtn: {
     ...typography.body,
-    color: colors.accent,
+    color: '#3b82f6',
     width: 60,
   },
   title: {
     ...typography.h3,
-    color: colors.text.primary,
+    color: '#ffffff',
   },
   monthNav: {
     flexDirection: 'row',
@@ -248,12 +248,12 @@ const calStyles = StyleSheet.create({
   },
   monthArrow: {
     fontSize: 28,
-    color: colors.accent,
+    color: '#3b82f6',
     paddingHorizontal: spacing.md,
   },
   monthLabel: {
     ...typography.bodyMedium,
-    color: colors.text.primary,
+    color: '#ffffff',
     textTransform: 'capitalize',
   },
   weekRow: {
@@ -261,13 +261,13 @@ const calStyles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.2)',
   },
   weekDay: {
     flex: 1,
     textAlign: 'center',
     ...typography.caption,
-    color: colors.text.muted,
+    color: 'rgba(255,255,255,0.4)',
     fontWeight: '600',
   },
   grid: {
@@ -290,29 +290,29 @@ const calStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCircleSelected: {
-    backgroundColor: colors.accent,
+    backgroundColor: '#3b82f6',
   },
   dayCircleToday: {
     borderWidth: 2,
-    borderColor: colors.accent,
+    borderColor: '#3b82f6',
   },
   dayCircleLogged: {
-    backgroundColor: colors.successLight,
+    backgroundColor: 'rgba(0, 184, 148, 0.15)',
   },
   dayText: {
     fontSize: 15,
-    color: colors.text.primary,
+    color: '#ffffff',
   },
   dayTextSelected: {
-    color: '#fff',
+    color: '#ffffff',
     fontWeight: '700',
   },
   dayTextFuture: {
-    color: colors.text.muted,
-    opacity: 0.4,
+    color: '#ffffff',
+    opacity: 0.3,
   },
   dayTextLogged: {
-    color: colors.success,
+    color: '#00b894',
     fontWeight: '600',
   },
 });

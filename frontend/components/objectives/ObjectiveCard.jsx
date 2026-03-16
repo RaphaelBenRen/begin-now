@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert } from 'react-native';
-import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 
 export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete, readOnly = false }) {
   const [isLogging, setIsLogging] = useState(false);
@@ -97,7 +96,7 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
       {/* Top row: icon + info + actions */}
       <View style={styles.topRow}>
         <View style={styles.left}>
-          <View style={[styles.iconBadge, { backgroundColor: objective.color + '20' }]}>
+          <View style={styles.iconBadge}>
             <Text style={styles.icon}>{objective.icon}</Text>
           </View>
 
@@ -113,7 +112,7 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
 
             {/* Valeur logguée pour quantifiable */}
             {isQuantifiable && loggedValue != null && (isDone || isFailed) && (
-              <Text style={[styles.valueText, isFailed && { color: colors.danger }]}>
+              <Text style={[styles.valueText, isFailed && { color: '#ff7675' }]}>
                 {loggedValue} {objective.unit || ''}
               </Text>
             )}
@@ -148,7 +147,7 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
             value={inputValue}
             onChangeText={setInputValue}
             placeholder={`Nombre${objective.unit ? ` (${objective.unit})` : ''}`}
-            placeholderTextColor={colors.text.muted}
+            placeholderTextColor="rgba(255,255,255,0.35)"
             keyboardType="numeric"
             autoFocus
             returnKeyType="done"
@@ -168,20 +167,19 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
+    backgroundColor: 'rgba(15, 25, 50, 0.95)',
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   cardDone: {
-    borderColor: colors.success,
-    backgroundColor: colors.successLight,
+    borderColor: '#00b894',
+    backgroundColor: 'rgba(0, 184, 148, 0.1)',
   },
   cardFailed: {
-    borderColor: colors.danger,
-    backgroundColor: colors.dangerLight,
+    borderColor: '#ff7675',
+    backgroundColor: 'rgba(255, 118, 117, 0.1)',
   },
   topRow: {
     flexDirection: 'row',
@@ -192,12 +190,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: spacing.md,
+    gap: 12,
   },
   iconBadge: {
     width: 44,
     height: 44,
-    borderRadius: radius.md,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -209,80 +208,82 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    ...typography.bodyMedium,
-    color: colors.text.primary,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   streakText: {
-    ...typography.caption,
-    color: colors.text.secondary,
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   valueText: {
-    ...typography.caption,
-    color: colors.accent,
+    fontSize: 12,
     fontWeight: '600',
+    color: '#3b82f6',
   },
   actions: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: 8,
   },
   actionBtn: {
     width: 40,
     height: 40,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   actionBtnDone: {
-    backgroundColor: colors.success,
-    borderColor: colors.success,
+    backgroundColor: '#00b894',
+    borderColor: '#00b894',
   },
   actionBtnFailed: {
-    backgroundColor: colors.danger,
-    borderColor: colors.danger,
+    backgroundColor: '#ff7675',
+    borderColor: '#ff7675',
   },
   actionIcon: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text.muted,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   actionIconActive: {
-    color: '#fff',
+    color: '#ffffff',
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
-    gap: spacing.sm,
+    marginTop: 10,
+    gap: 8,
   },
   valueInput: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    ...typography.body,
-    color: colors.text.primary,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#ffffff',
   },
   submitBtn: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    backgroundColor: '#3b82f6',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   submitBtnText: {
-    ...typography.bodyMedium,
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   cancelBtn: {
-    padding: spacing.sm,
+    padding: 8,
   },
   cancelBtnText: {
     fontSize: 16,
-    color: colors.text.muted,
+    color: 'rgba(255, 255, 255, 0.5)',
   },
 });
