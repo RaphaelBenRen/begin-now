@@ -5,10 +5,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
-import { format, eachDayOfInterval, subDays, subWeeks, subMonths, subYears, parseISO } from 'date-fns';
+import { format, eachDayOfInterval, subDays, subWeeks, subMonths, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useObjectivesStore from '../../store/objectivesStore';
 import useStatsStore from '../../store/statsStore';
+import useDuelsStore from '../../store/duelsStore';
+import useAuthStore from '../../store/authStore';
+import DuelProgressModal from '../../components/modals/DuelProgressModal';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 
 const PERIODS = [
@@ -20,12 +23,16 @@ const PERIODS = [
 export default function StatsScreen() {
   const { objectives, fetchObjectives } = useObjectivesStore();
   const { stats, streaks, isLoading, fetchStats, fetchStreaks } = useStatsStore();
+  const { duels, fetchDuels } = useDuelsStore();
+  const { user } = useAuthStore();
   const [period, setPeriod] = useState('week');
-  const [selectedObjective, setSelectedObjective] = useState(null); // null = tous
+  const [selectedObjective, setSelectedObjective] = useState(null);
+  const [duelProgress, setDuelProgress] = useState(null);
 
   useEffect(() => {
     fetchObjectives();
     fetchStreaks();
+    fetchDuels();
   }, []);
 
   useEffect(() => {
@@ -314,7 +321,23 @@ export default function StatsScreen() {
             )}
           </>
         )}
+
+        {/* ─── Section Défis ─── */}
+        <DuelsSection
+          duels={duels}
+          currentUserId={user?.id}
+          onOpenDuel={setDuelProgress}
+        />
+
+        <View style={{ height: spacing.xxl }} />
       </ScrollView>
+
+      <DuelProgressModal
+        visible={!!duelProgress}
+        duel={duelProgress}
+        currentUserId={user?.id}
+        onClose={() => setDuelProgress(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -373,6 +396,83 @@ function HistoryRow({ log, objectives }) {
           {isDone ? '✓' : isFailed ? '✗' : '—'}
         </Text>
       </View>
+    </View>
+  );
+}
+
+// ─── Section Défis ──────────────────────────────────────────────
+
+function DuelsSection({ duels, currentUserId, onOpenDuel }) {
+  if (!duels.length) return null;
+
+  const active = duels.filter((d) => ['accepted', 'active'].includes(d.status));
+  const pending = duels.filter((d) => d.status === 'pending');
+  const finished = duels.filter((d) => ['declined', 'completed'].includes(d.status));
+
+  return (
+    <View style={[styles.card, { marginTop: spacing.md }]}>
+      <Text style={styles.cardTitle}>⚔️  Défis</Text>
+
+      {/* Résumé chiffré */}
+      <View style={styles.duelSummaryRow}>
+        <DuelStat value={active.length} label="Actifs" color={colors.success} />
+        <DuelStat value={pending.length} label="En attente" color={colors.warning} />
+        <DuelStat value={finished.length} label="Terminés" color={colors.text.muted} />
+      </View>
+
+      {/* Défis actifs cliquables */}
+      {active.length > 0 ? (
+        <View style={styles.duelList}>
+          {active.map((duel) => {
+            const isChallenger = duel.challenger_id === currentUserId;
+            const opponent = isChallenger ? duel.challenged : duel.challenger;
+            const daysLeft = duel.end_date
+              ? differenceInDays(parseISO(duel.end_date), new Date())
+              : null;
+
+            return (
+              <TouchableOpacity
+                key={duel.id}
+                style={styles.duelCard}
+                onPress={() => onOpenDuel(duel)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.duelIconCircle}>
+                  <Text style={{ fontSize: 20 }}>{duel.icon}</Text>
+                </View>
+                <View style={styles.duelInfo}>
+                  <Text style={styles.duelTitle} numberOfLines={1}>{duel.title}</Text>
+                  <Text style={styles.duelOpponent}>vs {opponent?.username}</Text>
+                </View>
+                <View style={styles.duelRight}>
+                  {daysLeft !== null && (
+                    <Text style={[
+                      styles.duelDays,
+                      { color: daysLeft <= 3 ? colors.danger : colors.text.muted },
+                    ]}>
+                      {daysLeft > 0 ? `J-${daysLeft}` : daysLeft === 0 ? 'Dernier jour' : 'Terminé'}
+                    </Text>
+                  )}
+                  <Text style={styles.duelChevron}>›</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : (
+        <Text style={styles.duelEmptyText}>
+          Aucun défi actif — défie un ami depuis l'onglet Amis !
+        </Text>
+      )}
+    </View>
+  );
+}
+
+function DuelStat({ value, label, color }) {
+  return (
+    <View style={styles.duelStatBlock}>
+      <Text style={[styles.duelStatValue, { color }]}>{value}</Text>
+      <Text style={styles.duelStatLabel}>{label}</Text>
     </View>
   );
 }
@@ -507,4 +607,35 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: spacing.xxl, gap: spacing.sm },
   emptyText: { ...typography.h3, color: colors.text.secondary },
   emptySubText: { ...typography.body, color: colors.text.muted, textAlign: 'center', paddingHorizontal: spacing.xl },
+
+  duelSummaryRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.md,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  duelStatBlock: { flex: 1, alignItems: 'center' },
+  duelStatValue: { ...typography.h3 },
+  duelStatLabel: { ...typography.caption, color: colors.text.muted, marginTop: 2 },
+
+  duelList: { gap: spacing.sm },
+  duelCard: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    backgroundColor: colors.background, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border,
+    padding: spacing.md,
+  },
+  duelIconCircle: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.accentLight,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  duelInfo: { flex: 1 },
+  duelTitle: { ...typography.bodyMedium, color: colors.text.primary },
+  duelOpponent: { ...typography.caption, color: colors.text.secondary },
+  duelRight: { alignItems: 'flex-end', gap: 2 },
+  duelDays: { ...typography.caption, fontWeight: '600' },
+  duelChevron: { fontSize: 20, color: colors.text.muted },
+  duelEmptyText: { ...typography.small, color: colors.text.muted, textAlign: 'center', paddingVertical: spacing.sm },
 });
