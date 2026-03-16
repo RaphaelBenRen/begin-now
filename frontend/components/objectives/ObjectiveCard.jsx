@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 
 export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete, readOnly = false }) {
   const [isLogging, setIsLogging] = useState(false);
@@ -105,9 +106,12 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
 
             {/* Streak */}
             {objective.streak?.current_streak > 0 && (
-              <Text style={styles.streakText}>
-                🔥 {objective.streak.current_streak} jour{objective.streak.current_streak > 1 ? 's' : ''}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={{ fontSize: 12 }}>🔥</Text>
+                <Text style={styles.streakText}>
+                  {objective.streak.current_streak} jour{objective.streak.current_streak > 1 ? 's' : ''}
+                </Text>
+              </View>
             )}
 
             {/* Valeur logguée pour quantifiable */}
@@ -126,7 +130,7 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
             onPress={handleFailed}
             disabled={isLogging}
           >
-            <Text style={[styles.actionIcon, isFailed && styles.actionIconActive]}>✗</Text>
+            <Feather name="x" size={18} color={isFailed ? '#ffffff' : 'rgba(255,255,255,0.5)'} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -134,7 +138,7 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
             onPress={handleDone}
             disabled={isLogging}
           >
-            <Text style={[styles.actionIcon, isDone && styles.actionIconActive]}>✓</Text>
+            <Feather name="check" size={18} color={isDone ? '#ffffff' : 'rgba(255,255,255,0.5)'} />
           </TouchableOpacity>
         </View>
       </View>
@@ -157,7 +161,7 @@ export default function ObjectiveCard({ objective, log, onLog, onEdit, onDelete,
             <Text style={styles.submitBtnText}>OK</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowInput(false)}>
-            <Text style={styles.cancelBtnText}>✕</Text>
+            <Feather name="x" size={16} color="rgba(255,255,255,0.5)" />
           </TouchableOpacity>
         </View>
       )}

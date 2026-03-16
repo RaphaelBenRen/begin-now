@@ -3,16 +3,17 @@ import {
   TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { spacing, typography } from '../../constants/theme';
 
 const STATUS_CONFIG = {
-  pending:   { color: '#fdcb6e',              bg: 'rgba(253,203,110,0.15)', label: 'En attente',  emoji: '⏳' },
-  accepted:  { color: '#00b894',              bg: 'rgba(0,184,148,0.15)',   label: 'Accepté',     emoji: '✅' },
-  declined:  { color: '#ff7675',              bg: 'rgba(255,118,117,0.15)', label: 'Refusé',      emoji: '❌' },
-  active:    { color: '#3b82f6',              bg: 'rgba(59,130,246,0.15)',  label: 'En cours',    emoji: '🔥' },
-  completed: { color: 'rgba(255,255,255,0.7)', bg: 'rgba(255,255,255,0.1)', label: 'Terminé',     emoji: '🏁' },
+  pending:   { color: '#fdcb6e',              bg: 'rgba(253,203,110,0.15)', label: 'En attente',  icon: 'clock' },
+  accepted:  { color: '#00b894',              bg: 'rgba(0,184,148,0.15)',   label: 'Accepté',     icon: 'check-circle' },
+  declined:  { color: '#ff7675',              bg: 'rgba(255,118,117,0.15)', label: 'Refusé',      icon: 'x-circle' },
+  active:    { color: '#3b82f6',              bg: 'rgba(59,130,246,0.15)',  label: 'En cours',    icon: 'zap' },
+  completed: { color: 'rgba(255,255,255,0.7)', bg: 'rgba(255,255,255,0.1)', label: 'Terminé',     icon: 'flag' },
 };
 
 export default function DuelDetailModal({
@@ -47,8 +48,8 @@ export default function DuelDetailModal({
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeBtn}>✕</Text>
+          <TouchableOpacity onPress={onClose} style={{ width: 32 }}>
+            <Feather name="x" size={20} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Détail du défi</Text>
           <View style={{ width: 32 }} />
@@ -61,9 +62,10 @@ export default function DuelDetailModal({
               <Text style={styles.heroIcon}>{duel.icon}</Text>
             </View>
             <Text style={styles.heroTitle}>{duel.title}</Text>
-            <View style={[styles.statusPill, { backgroundColor: status.bg }]}>
+            <View style={[styles.statusPill, { backgroundColor: status.bg, flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+              <Feather name={status.icon} size={16} color={status.color} />
               <Text style={[styles.statusPillText, { color: status.color }]}>
-                {status.emoji}  {status.label}
+                {status.label}
               </Text>
             </View>
           </View>
@@ -91,7 +93,10 @@ export default function DuelDetailModal({
             {/* Dates */}
             {(duel.start_date || duel.end_date) && (
               <View style={styles.infoCard}>
-                <Text style={styles.infoCardTitle}>📅  Période</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Feather name="calendar" size={14} color="#ffffff" />
+                  <Text style={styles.infoCardTitle}>Période</Text>
+                </View>
                 <View style={styles.datesRow}>
                   {duel.start_date && (
                     <View style={styles.dateBlock}>
@@ -114,9 +119,10 @@ export default function DuelDetailModal({
                   )}
                 </View>
                 {daysInfo && (
-                  <View style={styles.daysChip}>
+                  <View style={[styles.daysChip, { flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                    <Feather name="clock" size={14} color="#3b82f6" />
                     <Text style={styles.daysChipText}>
-                      ⏱  {daysInfo}
+                      {daysInfo}
                     </Text>
                   </View>
                 )}
@@ -126,7 +132,10 @@ export default function DuelDetailModal({
             {/* Message */}
             {duel.description && (
               <View style={styles.infoCard}>
-                <Text style={styles.infoCardTitle}>💬  Message</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Feather name="message-circle" size={14} color="#ffffff" />
+                  <Text style={styles.infoCardTitle}>Message</Text>
+                </View>
                 <Text style={styles.descText}>"{duel.description}"</Text>
                 <Text style={styles.descAuthor}>— {challenger?.username}</Text>
               </View>
@@ -135,7 +144,7 @@ export default function DuelDetailModal({
             {/* Contexte selon statut */}
             {duel.status === 'accepted' && (
               <View style={[styles.infoCard, { backgroundColor: 'rgba(0,184,148,0.15)', borderColor: '#00b894' }]}>
-                <Text style={styles.infoCardTitle}>✅  Défi accepté !</Text>
+                <Text style={styles.infoCardTitle}>Défi accepté !</Text>
                 <Text style={styles.contextText}>
                   Ajoute "{duel.title}" à ton dashboard et coche-le chaque jour.
                   Ton ami verra ta progression sur ton profil.
@@ -145,7 +154,7 @@ export default function DuelDetailModal({
 
             {isPendingForMe && (
               <View style={[styles.infoCard, { backgroundColor: 'rgba(253,203,110,0.15)', borderColor: '#fdcb6e' }]}>
-                <Text style={styles.infoCardTitle}>⏳  Tu as été défié !</Text>
+                <Text style={styles.infoCardTitle}>Tu as été défié !</Text>
                 <Text style={styles.contextText}>
                   {challenger?.username} te lance un défi. Accepte-le pour vous motiver ensemble !
                 </Text>
@@ -174,7 +183,10 @@ export default function DuelDetailModal({
               >
                 {isActioning
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={styles.acceptBtnText}>✓  Accepter le défi</Text>
+                  : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name="check" size={16} color="#fff" />
+                      <Text style={styles.acceptBtnText}>Accepter</Text>
+                    </View>
                 }
               </TouchableOpacity>
               <TouchableOpacity
@@ -182,7 +194,10 @@ export default function DuelDetailModal({
                 onPress={onDecline}
                 disabled={isActioning}
               >
-                <Text style={styles.declineBtnText}>✗  Refuser</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Feather name="x" size={16} color="#ff7675" />
+                  <Text style={styles.declineBtnText}>Refuser</Text>
+                </View>
               </TouchableOpacity>
             </View>
           )}

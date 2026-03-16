@@ -5,6 +5,7 @@ import { setToken, clearToken } from '../lib/tokenManager';
 
 const useAuthStore = create((set, get) => ({
   user: null,
+  profile: null,
   isLoading: true,
 
   initialize: async () => {
@@ -58,6 +59,7 @@ const useAuthStore = create((set, get) => ({
 
   fetchFullProfile: async () => {
     const response = await api.get('/profile');
+    set({ profile: response.data });
     return response.data;
   },
 

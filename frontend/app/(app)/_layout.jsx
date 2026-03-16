@@ -1,9 +1,36 @@
+import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
+import useObjectivesStore from '../../store/objectivesStore';
+import useStatsStore from '../../store/statsStore';
+import useFriendsStore from '../../store/friendsStore';
+import useDuelsStore from '../../store/duelsStore';
+import useAuthStore from '../../store/authStore';
 
 export default function AppLayout() {
+  const fetchObjectives = useObjectivesStore((s) => s.fetchObjectives);
+  const fetchLogsByDate = useObjectivesStore((s) => s.fetchLogsByDate);
+  const fetchAllPeriods = useStatsStore((s) => s.fetchAllPeriods);
+  const fetchStreaks = useStatsStore((s) => s.fetchStreaks);
+  const fetchFriends = useFriendsStore((s) => s.fetchFriends);
+  const fetchRequests = useFriendsStore((s) => s.fetchRequests);
+  const fetchDuels = useDuelsStore((s) => s.fetchDuels);
+  const fetchFullProfile = useAuthStore((s) => s.fetchFullProfile);
+
+  // Pré-charger toutes les données au lancement
+  useEffect(() => {
+    fetchObjectives();
+    fetchLogsByDate(new Date()); // logs d'aujourd'hui
+    fetchAllPeriods();
+    fetchStreaks();
+    fetchFriends();
+    fetchRequests();
+    fetchDuels();
+    fetchFullProfile();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{

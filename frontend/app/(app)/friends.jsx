@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, Image,
@@ -14,6 +14,7 @@ import DuelModal from '../../components/modals/DuelModal';
 import DuelDetailModal from '../../components/modals/DuelDetailModal';
 import DuelProgressModal from '../../components/modals/DuelProgressModal';
 import GradientBackground from '../../components/ui/GradientBackground';
+import { Feather } from '@expo/vector-icons';
 import { spacing, typography } from '../../constants/theme';
 
 const TABS = [
@@ -44,11 +45,7 @@ export default function FriendsScreen() {
   const [duelProgress, setDuelProgress] = useState(null);   // défi accepté → vue progression
   const [isActioning, setIsActioning] = useState(false);
 
-  useEffect(() => {
-    fetchFriends();
-    fetchRequests();
-    fetchDuels();
-  }, []);
+  // Données déjà pré-chargées par _layout.jsx
 
   // ─── Ajouter un ami ───────────────────────────────────────────
   const handleSendRequest = async () => {
@@ -178,13 +175,13 @@ export default function FriendsScreen() {
                         style={styles.acceptBtn}
                         onPress={() => acceptRequest(req.id)}
                       >
-                        <Text style={styles.acceptBtnText}>✓</Text>
+                        <Feather name="check" size={16} color="#00b894" />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.declineBtn}
                         onPress={() => declineRequest(req.id)}
                       >
-                        <Text style={styles.declineBtnText}>✗</Text>
+                        <Feather name="x" size={16} color="#ff7675" />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -294,7 +291,7 @@ function FriendCard({ friend, onViewProfile, onChallenge }) {
         </Text>
       </View>
       <TouchableOpacity style={styles.duelBtn} onPress={onChallenge}>
-        <Text style={styles.duelBtnText}>⚔️</Text>
+        <Feather name="crosshair" size={18} color="#3b82f6" />
       </TouchableOpacity>
     </TouchableOpacity>
   );

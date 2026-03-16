@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { format, subDays, addDays, isToday, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths, isFuture } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { spacing, typography } from '../../constants/theme';
@@ -28,7 +29,7 @@ export default function DateSelector({ selectedDate, onSelectDate, loggedDates =
         {/* Label date — tap pour ouvrir le calendrier */}
         <TouchableOpacity style={styles.dateBtn} onPress={() => setCalendarVisible(true)}>
           <Text style={styles.dateLabel}>{label}</Text>
-          <Text style={styles.calendarIcon}>📅</Text>
+          <Feather name="calendar" size={16} color="rgba(255,255,255,0.5)" />
         </TouchableOpacity>
 
         {/* Flèche droite (grisée si aujourd'hui) */}

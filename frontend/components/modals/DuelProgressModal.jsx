@@ -4,6 +4,7 @@ import {
   TouchableOpacity, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { format, parseISO, eachDayOfInterval, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { spacing, typography } from '../../constants/theme';
@@ -71,8 +72,8 @@ export default function DuelProgressModal({ visible, onClose, duel, currentUserI
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeBtn}>✕</Text>
+          <TouchableOpacity onPress={onClose} style={{ width: 32 }}>
+            <Feather name="x" size={20} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>{duel.icon} {duel.title}</Text>
           <View style={{ width: 32 }} />
@@ -106,7 +107,10 @@ export default function DuelProgressModal({ visible, onClose, duel, currentUserI
                   >
                     {isLogging
                       ? <ActivityIndicator color="#fff" />
-                      : <Text style={styles.doneBtnText}>✓  C'est fait !</Text>
+                      : <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Feather name="check" size={16} color="#fff" />
+                          <Text style={styles.doneBtnText}>C'est fait !</Text>
+                        </View>
                     }
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -114,14 +118,17 @@ export default function DuelProgressModal({ visible, onClose, duel, currentUserI
                     onPress={() => handleLog('skipped')}
                     disabled={isLogging}
                   >
-                    <Text style={styles.skipBtnText}>✗  Raté</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name="x" size={16} color="#ff7675" />
+                      <Text style={styles.skipBtnText}>Raté</Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
               <View style={styles.todayDone}>
                 <Text style={styles.todayDoneText}>
-                  {myTodayLog.status === 'done' ? '✅  Tu as coché aujourd\'hui !' : '❌  Raté pour aujourd\'hui'}
+                  {myTodayLog.status === 'done' ? 'Tu as coché aujourd\'hui !' : 'Raté pour aujourd\'hui'}
                 </Text>
                 <Text style={styles.todayDoneHint}>Tire vers le bas pour actualiser</Text>
               </View>
@@ -153,7 +160,7 @@ export default function DuelProgressModal({ visible, onClose, duel, currentUserI
                   label="Streak actuel"
                   myValue={myData?.stats?.streak ?? 0}
                   oppValue={opponentData?.stats?.streak ?? 0}
-                  suffix=" 🔥"
+                  suffix=""
                   higherIsBetter
                 />
                 <StatRow

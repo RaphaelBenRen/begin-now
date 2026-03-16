@@ -50,9 +50,13 @@ export default function DashboardScreen() {
   const isSelectedToday = isToday(selectedDate);
   const logs = getLogsForDate(selectedDate);
 
+  // Charger les logs quand la date change
   useEffect(() => {
-    fetchObjectives();
-    // Charger les dates avec au moins un log "done" (90 derniers jours)
+    fetchLogsByDate(selectedDate);
+  }, [selectedDate]);
+
+  // Charger les dates loguées une seule fois
+  useEffect(() => {
     const loadLoggedDates = async () => {
       try {
         const from = format(subDays(new Date(), 90), 'yyyy-MM-dd');
@@ -85,7 +89,7 @@ export default function DashboardScreen() {
         {/* Header fixe */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Bonjour, {user?.username} 👋</Text>
+            <Text style={styles.greeting}>Bonjour, {user?.username}</Text>
             <Text style={styles.headerDate}>
               {format(selectedDate, 'EEEE d MMMM', { locale: fr })}
             </Text>
@@ -109,9 +113,10 @@ export default function DashboardScreen() {
         {/* Bannière jour passé */}
         {!isSelectedToday && (
           <View style={styles.pastBanner}>
-            <Text style={styles.pastBannerText}>
-              📅 Historique — lecture seule
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Feather name="calendar" size={14} color={darkColors.warning} />
+              <Text style={styles.pastBannerText}>Historique — lecture seule</Text>
+            </View>
           </View>
         )}
 

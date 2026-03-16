@@ -36,6 +36,15 @@ router.get('/', async (req, res) => {
 
   const to = new Date().toISOString().split('T')[0];
 
+  // Récupérer les objectifs actifs pour ne pas inclure les archivés
+  const { data: activeObjectives } = await supabase
+    .from('objectives')
+    .select('id')
+    .eq('user_id', req.user.id)
+    .eq('is_active', true);
+
+  const activeIds = (activeObjectives || []).map((o) => o.id);
+
   let query = supabase
     .from('daily_logs')
     .select(`
@@ -47,7 +56,11 @@ router.get('/', async (req, res) => {
     .lte('log_date', to)
     .order('log_date', { ascending: true });
 
-  if (objective_id) query = query.eq('objective_id', objective_id);
+  if (objective_id) {
+    query = query.eq('objective_id', objective_id);
+  } else if (activeIds.length > 0) {
+    query = query.in('objective_id', activeIds);
+  }
 
   const { data, error } = await query;
 
@@ -65,11 +78,14 @@ router.get('/', async (req, res) => {
 router.get('/streaks', async (req, res) => {
   const { data, error } = await supabase
     .from('streaks')
-    .select('*, objective:objectives(title, icon, color)')
+    .select('*, objective:objectives(title, icon, color, is_active)')
     .eq('user_id', req.user.id);
 
+  // Ne retourner que les streaks d'objectifs actifs
+  const activeStreaks = (data || []).filter((s) => s.objective?.is_active === true);
+
   if (error) return res.status(500).json({ message: error.message });
-  return res.json(data);
+  return res.json(activeStreaks);
 });
 
 // GET /stats/badges — tous les badges du user

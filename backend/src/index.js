@@ -24,10 +24,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Rate limiting global
+// Rate limiting global — plus permissif en dev
+const isDev = process.env.NODE_ENV !== 'production';
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 2000 : 200,
   message: { message: 'Trop de requêtes, réessaie plus tard.' },
 });
 app.use(limiter);
@@ -35,7 +36,7 @@ app.use(limiter);
 // Rate limiting strict pour l'auth
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: isDev ? 100 : 10,
   message: { message: 'Trop de tentatives, réessaie dans 15 minutes.' },
 });
 

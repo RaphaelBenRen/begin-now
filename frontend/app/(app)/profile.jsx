@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Feather } from '@expo/vector-icons';
 import useAuthStore from '../../store/authStore';
 import useObjectivesStore from '../../store/objectivesStore';
 import { spacing, typography } from '../../constants/theme';
@@ -33,28 +34,23 @@ const C = {
 };
 
 export default function ProfileScreen() {
-  const { user, logout, fetchFullProfile, updateUsername, uploadAvatar, changePassword, deleteAccount } = useAuthStore();
+  const { user, profile, logout, fetchFullProfile, updateUsername, uploadAvatar, changePassword, deleteAccount } = useAuthStore();
   const { objectives, fetchObjectives, updateObjective } = useObjectivesStore();
-  const [profile, setProfile] = useState(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(!useAuthStore.getState().profile);
 
   // Modals
   const [usernameModal, setUsernameModal] = useState(false);
   const [passwordModal, setPasswordModal] = useState(false);
 
   const loadProfile = useCallback(async () => {
-    setIsLoadingProfile(true);
+    if (!profile) setIsLoadingProfile(true);
     try {
-      const data = await fetchFullProfile();
-      setProfile(data);
+      await fetchFullProfile();
     } catch (_) {}
     setIsLoadingProfile(false);
   }, []);
 
-  useEffect(() => {
-    loadProfile();
-    fetchObjectives();
-  }, []);
+  // Données déjà pré-chargées par _layout.jsx
 
   // ─── Changer la photo ─────────────────────────────────────
   const handlePickAvatar = async () => {
@@ -144,7 +140,7 @@ export default function ProfileScreen() {
                 </View>
               )}
               <View style={styles.cameraOverlay}>
-                <Text style={styles.cameraIcon}>📷</Text>
+                <Feather name="camera" size={14} color="#fff" />
               </View>
             </TouchableOpacity>
 
@@ -219,14 +215,14 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>Mon compte</Text>
             <View style={styles.settingsCard}>
               <SettingsRow
-                icon="✏️"
+                icon="edit-2"
                 label="Modifier le pseudo"
                 value={`@${user?.username}`}
                 onPress={() => setUsernameModal(true)}
               />
               <View style={styles.divider} />
               <SettingsRow
-                icon="🔒"
+                icon="lock"
                 label="Changer le mot de passe"
                 onPress={() => setPasswordModal(true)}
               />
@@ -237,14 +233,14 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Application</Text>
             <View style={styles.settingsCard}>
-              <SettingsRow icon="📱" label="Version" value="1.0.0" />
+              <SettingsRow icon="smartphone" label="Version" value="1.0.0" />
             </View>
           </View>
 
           {/* ─── Actions compte ─── */}
           <View style={[styles.section, { gap: spacing.sm }]}>
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-              <Text style={styles.logoutIcon}>🚪</Text>
+              <Feather name="log-out" size={18} color="#fff" />
               <Text style={styles.logoutText}>Se déconnecter</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
@@ -297,7 +293,7 @@ function SettingsRow({ icon, label, value, onPress }) {
       disabled={!onPress}
       activeOpacity={onPress ? 0.7 : 1}
     >
-      <Text style={styles.settingsIcon}>{icon}</Text>
+      <Feather name={icon} size={18} color="rgba(255,255,255,0.5)" />
       <Text style={styles.settingsLabel}>{label}</Text>
       <View style={styles.settingsRight}>
         {value && <Text style={styles.settingsValue} numberOfLines={1}>{value}</Text>}
@@ -403,9 +399,12 @@ function ChangePasswordModal({ visible, onClose, onSave }) {
           <TouchableOpacity onPress={handleSave} disabled={isLoading || success}>
             {isLoading
               ? <ActivityIndicator color={C.accent} />
-              : <Text style={[modalStyles.save, success && { color: C.success }]}>
-                  {success ? '✓ Fait' : 'Enregistrer'}
-                </Text>
+              : success
+                ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Feather name="check" size={16} color={C.success} />
+                    <Text style={[modalStyles.save, { color: C.success }]}>Fait</Text>
+                  </View>
+                : <Text style={modalStyles.save}>Enregistrer</Text>
             }
           </TouchableOpacity>
         </View>

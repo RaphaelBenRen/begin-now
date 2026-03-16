@@ -13,6 +13,7 @@ import useAuthStore from '../../store/authStore';
 import DuelProgressModal from '../../components/modals/DuelProgressModal';
 import GradientBackground from '../../components/ui/GradientBackground';
 import GlassCard from '../../components/ui/GlassCard';
+import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius, typography, shadows } from '../../constants/theme';
 
 const PERIODS = [
@@ -23,7 +24,7 @@ const PERIODS = [
 
 export default function StatsScreen() {
   const { objectives, fetchObjectives } = useObjectivesStore();
-  const { stats, streaks, isLoading, fetchStats, fetchStreaks } = useStatsStore();
+  const { statsByPeriod, streaks, isLoading, fetchAllPeriods, fetchStreaks, getStats } = useStatsStore();
   const { duels, fetchDuels } = useDuelsStore();
   const { user } = useAuthStore();
   const [period, setPeriod] = useState('week');
@@ -31,15 +32,15 @@ export default function StatsScreen() {
   const [duelProgress, setDuelProgress] = useState(null);
   const { width: screenWidth } = useWindowDimensions();
 
+  // Recharger les stats uniquement quand on change d'objectif filtré
   useEffect(() => {
-    fetchObjectives();
-    fetchStreaks();
-    fetchDuels();
-  }, []);
+    if (selectedObjective) {
+      fetchAllPeriods(selectedObjective);
+    }
+  }, [selectedObjective]);
 
-  useEffect(() => {
-    fetchStats(period, selectedObjective);
-  }, [period, selectedObjective]);
+  // Stats de la période courante (déjà en cache)
+  const stats = getStats(period);
 
   // ─── Données courbe de complétion ───
   const completionData = useMemo(() => {
@@ -668,7 +669,7 @@ function StreakRow({ streak }) {
         <Text style={styles.streakSub}>Record : {streak.longest_streak} jours</Text>
       </View>
       <View style={styles.streakBadge}>
-        <Text style={styles.streakFire}>🔥</Text>
+        <Text style={{ fontSize: 16 }}>🔥</Text>
         <Text style={styles.streakNum}>{streak.current_streak}</Text>
       </View>
     </View>
@@ -696,9 +697,7 @@ function HistoryRow({ log, objectives }) {
         isFailed && styles.statusFailed,
         log.status === 'skipped' && styles.statusSkipped,
       ]}>
-        <Text style={styles.statusText}>
-          {isDone ? '✓' : isFailed ? '✗' : '—'}
-        </Text>
+        {isDone ? <Feather name="check" size={13} color="#fff" /> : isFailed ? <Feather name="x" size={13} color="#fff" /> : <Feather name="minus" size={13} color="#fff" />}
       </View>
     </View>
   );
@@ -715,7 +714,7 @@ function DuelsSection({ duels, currentUserId, onOpenDuel }) {
 
   return (
     <GlassCard style={[styles.card, { marginTop: spacing.md }]}>
-      <Text style={styles.cardTitle}>⚔️  Défis</Text>
+      <Text style={styles.cardTitle}><Feather name="crosshair" size={16} color="#3b82f6" /> Défis</Text>
 
       {/* Résumé chiffré */}
       <View style={styles.duelSummaryRow}>

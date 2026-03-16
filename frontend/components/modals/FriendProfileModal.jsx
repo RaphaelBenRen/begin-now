@@ -4,6 +4,7 @@ import {
   TouchableOpacity, ActivityIndicator, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { spacing, typography } from '../../constants/theme';
 
 export default function FriendProfileModal({ visible, onClose, friend, onChallenge, getFriendObjectives }) {
@@ -38,7 +39,7 @@ export default function FriendProfileModal({ visible, onClose, friend, onChallen
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeBtn}>✕</Text>
+            <Feather name="x" size={20} color="rgba(255,255,255,0.7)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profil</Text>
           <View style={{ width: 32 }} />
@@ -69,7 +70,10 @@ export default function FriendProfileModal({ visible, onClose, friend, onChallen
             style={styles.challengeBtn}
             onPress={() => { onClose(); setTimeout(() => onChallenge(friend), 300); }}
           >
-            <Text style={styles.challengeBtnText}>⚔️  Lancer un défi</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Feather name="crosshair" size={16} color="#fff" />
+              <Text style={styles.challengeBtnText}>Lancer un défi</Text>
+            </View>
           </TouchableOpacity>
 
           {/* Objectifs publics */}
@@ -110,7 +114,10 @@ function FriendObjectiveRow({ objective }) {
       <View style={styles.objInfo}>
         <Text style={styles.objTitle}>{objective.title}</Text>
         {streak?.current_streak > 0 && (
-          <Text style={styles.objStreak}>🔥 {streak.current_streak} jours</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={{ fontSize: 12 }}>🔥</Text>
+            <Text style={styles.objStreak}>{streak.current_streak} jours</Text>
+          </View>
         )}
       </View>
       <View style={[
@@ -119,9 +126,7 @@ function FriendObjectiveRow({ objective }) {
         isFailed && styles.statusDotFailed,
         !log && styles.statusDotEmpty,
       ]}>
-        <Text style={styles.statusDotText}>
-          {isDone ? '✓' : isFailed ? '✗' : '·'}
-        </Text>
+        {isDone ? <Feather name="check" size={14} color="#fff" /> : isFailed ? <Feather name="x" size={14} color="#fff" /> : <Feather name="minus" size={14} color="#fff" />}
       </View>
     </View>
   );
