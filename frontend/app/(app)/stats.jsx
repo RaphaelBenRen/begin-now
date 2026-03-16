@@ -29,8 +29,8 @@ export default function StatsScreen() {
   const [selectedObjective, setSelectedObjective] = useState(null);
   const [duelProgress, setDuelProgress] = useState(null);
   const { width: screenWidth } = useWindowDimensions();
-  // Largeur utile : écran - marges card (lg*2) - padding card (md*2) - petit buffer
-  const chartWidth = screenWidth - spacing.lg * 2 - spacing.md * 2 - 4;
+  // Largeur utile : écran - marges card (lg*2) - padding card (md*2) - y-axis labels (~40px) - buffer
+  const chartWidth = screenWidth - spacing.lg * 2 - spacing.md * 2 - 40;
 
   useEffect(() => {
     fetchObjectives();
@@ -42,63 +42,84 @@ export default function StatsScreen() {
     fetchStats(period, selectedObjective);
   }, [period, selectedObjective]);
 
-  // ─── Données courbe de complétion (remplace le graphique en barres) ───
+  // ─── Données courbe de complétion ───
   const completionData = useMemo(() => {
     if (!stats?.logs?.length) return [];
 
     const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+    const activeCount = objectives.filter((o) => o.is_active).length || 1;
+
+    const makePoint = (logs, label, isToday = false, isFuture = false) => {
+      if (isFuture) {
+        return {
+          value: 0,
+          label,
+          dataPointRadius: 0,
+          hideDataPoint: true,
+        };
+      }
+      const done = logs.filter((l) => l.status === 'done').length;
+      const total = isToday ? activeCount : (logs.length || 1);
+      const rate = Math.round((done / total) * 100);
+      return {
+        value: rate,
+        label,
+        dataPointText: `${rate}%`,
+        dataPointColor: isToday ? colors.accent : colors.text.muted,
+        dataPointRadius: isToday ? 8 : 5,
+        textShiftY: -14,
+        textColor: isToday ? colors.accent : colors.text.muted,
+        textFontSize: isToday ? 12 : 10,
+      };
+    };
 
     if (period === 'week') {
-      const days = eachDayOfInterval({ start: subDays(today, 6), end: today });
+      // 3 jours avant + aujourd'hui + 3 jours après = centré sur aujourd'hui
+      const days = eachDayOfInterval({ start: subDays(today, 3), end: subDays(today, -3) });
       return days.map((day) => {
         const dateStr = format(day, 'yyyy-MM-dd');
+        const isToday = dateStr === todayStr;
+        const isFuture = day > today;
         const dayLogs = stats.logs.filter((l) => l.log_date === dateStr);
-        const done = dayLogs.filter((l) => l.status === 'done').length;
-        const total = dayLogs.length;
-        return {
-          value: total > 0 ? Math.round((done / total) * 100) : 0,
-          label: format(day, 'EEE', { locale: fr }).slice(0, 2),
-          dataPointText: total > 0 ? `${Math.round((done / total) * 100)}%` : '',
-        };
+        const label = isToday ? 'Auj.' : format(day, 'EEE', { locale: fr }).slice(0, 2);
+        return makePoint(dayLogs, label, isToday, isFuture);
       });
     }
 
     if (period === 'month') {
-      return Array.from({ length: 4 }, (_, i) => {
-        const weekEnd = subWeeks(today, 3 - i);
+      // 2 semaines avant + semaine actuelle + 2 semaines après = 5 points centrés
+      return Array.from({ length: 5 }, (_, i) => {
+        const weekOffset = i - 2; // -2, -1, 0, +1, +2
+        const weekEnd = subWeeks(today, -weekOffset);
         const weekStart = subDays(weekEnd, 6);
+        const isCurrentWeek = i === 2;
+        const isFuture = weekOffset > 0;
         const weekLogs = stats.logs.filter((l) => {
           const d = parseISO(l.log_date);
           return d >= weekStart && d <= weekEnd;
         });
-        const done = weekLogs.filter((l) => l.status === 'done').length;
-        const total = weekLogs.length;
-        return {
-          value: total > 0 ? Math.round((done / total) * 100) : 0,
-          label: `S${i + 1}`,
-          dataPointText: total > 0 ? `${Math.round((done / total) * 100)}%` : '',
-        };
+        const label = isCurrentWeek ? 'Actu.' : `S${weekOffset > 0 ? '+' : ''}${weekOffset}`;
+        return makePoint(weekLogs, label, isCurrentWeek, isFuture);
       });
     }
 
     if (period === 'year') {
+      // 6 mois avant + mois actuel + 5 mois après = 12 points centrés
       return Array.from({ length: 12 }, (_, i) => {
-        const monthDate = subMonths(today, 11 - i);
+        const monthOffset = i - 6; // -6 to +5
+        const monthDate = subMonths(today, -monthOffset);
         const monthStr = format(monthDate, 'yyyy-MM');
         const monthLogs = stats.logs.filter((l) => l.log_date.startsWith(monthStr));
-        const done = monthLogs.filter((l) => l.status === 'done').length;
-        const total = monthLogs.length;
-        return {
-          value: total > 0 ? Math.round((done / total) * 100) : 0,
-          // n'afficher le label que pour les mois pairs (janv, mars, mai…)
-          label: i % 2 === 0 ? format(monthDate, 'MMM', { locale: fr }).slice(0, 3) : '',
-          dataPointText: total > 0 ? `${Math.round((done / total) * 100)}%` : '',
-        };
+        const isCurrentMonth = i === 6;
+        const isFuture = monthOffset > 0;
+        const label = format(monthDate, 'MMM', { locale: fr }).slice(0, 3);
+        return makePoint(monthLogs, label, isCurrentMonth, isFuture);
       });
     }
 
     return [];
-  }, [stats, period]);
+  }, [stats, period, objectives]);
 
   // ─── Données ligne (objectif quantifiable sélectionné) ───
   const lineData = useMemo(() => {
@@ -221,14 +242,16 @@ export default function StatsScreen() {
                     thickness={2.5}
                     dataPointsColor={colors.accent}
                     dataPointsRadius={5}
-                    hideRules
                     xAxisThickness={0}
                     yAxisThickness={0}
-                    hideYAxisText
+                    yAxisTextStyle={{ color: colors.text.muted, fontSize: 10 }}
+                    yAxisLabelSuffix="%"
                     xAxisLabelTextStyle={{ color: colors.text.muted, fontSize: 10 }}
                     maxValue={100}
                     minValue={0}
                     noOfSections={4}
+                    rulesColor={colors.border}
+                    rulesType="solid"
                     isAnimated
                     animationDuration={800}
                     curved
@@ -238,17 +261,14 @@ export default function StatsScreen() {
                     endFillColor={colors.accent + '00'}
                     startOpacity={0.4}
                     endOpacity={0}
-                    initialSpacing={12}
-                    endSpacing={12}
-                    spacing={(chartWidth - 24) / Math.max(completionData.length - 1, 1)}
-                    showTextOnFocus
+                    initialSpacing={16}
+                    endSpacing={16}
+                    spacing={(chartWidth - 32) / Math.max(completionData.length - 1, 1)}
+                    showValuesAsDataPointsText
                     focusEnabled
                     showDataPointOnFocus
-                    focusedDataPointRadius={6}
+                    focusedDataPointRadius={8}
                     focusedDataPointColor={colors.accent}
-                    textShiftY={-10}
-                    textFontSize={10}
-                    textColor={colors.text.secondary}
                   />
                 </View>
               </View>
