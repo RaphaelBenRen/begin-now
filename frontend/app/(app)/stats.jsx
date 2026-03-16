@@ -4,7 +4,7 @@ import {
   TouchableOpacity, ActivityIndicator, useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LineChart } from 'react-native-gifted-charts';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
 import { format, eachDayOfInterval, subDays, subWeeks, subMonths, parseISO, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import useObjectivesStore from '../../store/objectivesStore';
@@ -29,8 +29,6 @@ export default function StatsScreen() {
   const [selectedObjective, setSelectedObjective] = useState(null);
   const [duelProgress, setDuelProgress] = useState(null);
   const { width: screenWidth } = useWindowDimensions();
-  // Largeur utile : écran - marges card (lg*2) - padding card (md*2) - y-axis labels (~40px) - buffer
-  const chartWidth = screenWidth - spacing.lg * 2 - spacing.md * 2 - 40;
 
   useEffect(() => {
     fetchObjectives();
@@ -50,15 +48,7 @@ export default function StatsScreen() {
     const todayStr = format(today, 'yyyy-MM-dd');
     const activeCount = objectives.filter((o) => o.is_active).length || 1;
 
-    const makePoint = (logs, label, isToday = false, isFuture = false) => {
-      if (isFuture) {
-        return {
-          value: 0,
-          label,
-          dataPointRadius: 0,
-          hideDataPoint: true,
-        };
-      }
+    const makePoint = (logs, label, isToday = false) => {
       const done = logs.filter((l) => l.status === 'done').length;
       const total = isToday ? activeCount : (logs.length || 1);
       const rate = Math.round((done / total) * 100);
@@ -75,47 +65,42 @@ export default function StatsScreen() {
     };
 
     if (period === 'week') {
-      // 3 jours avant + aujourd'hui + 3 jours après = centré sur aujourd'hui
-      const days = eachDayOfInterval({ start: subDays(today, 3), end: subDays(today, -3) });
+      const days = eachDayOfInterval({ start: subDays(today, 6), end: today });
       return days.map((day) => {
         const dateStr = format(day, 'yyyy-MM-dd');
         const isToday = dateStr === todayStr;
-        const isFuture = day > today;
         const dayLogs = stats.logs.filter((l) => l.log_date === dateStr);
         const label = isToday ? 'Auj.' : format(day, 'EEE', { locale: fr }).slice(0, 2);
-        return makePoint(dayLogs, label, isToday, isFuture);
+        return makePoint(dayLogs, label, isToday);
       });
     }
 
     if (period === 'month') {
-      // 2 semaines avant + semaine actuelle + 2 semaines après = 5 points centrés
-      return Array.from({ length: 5 }, (_, i) => {
-        const weekOffset = i - 2; // -2, -1, 0, +1, +2
-        const weekEnd = subWeeks(today, -weekOffset);
+      return Array.from({ length: 4 }, (_, i) => {
+        const weekEnd = subWeeks(today, 3 - i);
         const weekStart = subDays(weekEnd, 6);
-        const isCurrentWeek = i === 2;
-        const isFuture = weekOffset > 0;
         const weekLogs = stats.logs.filter((l) => {
           const d = parseISO(l.log_date);
           return d >= weekStart && d <= weekEnd;
         });
-        const label = isCurrentWeek ? 'Actu.' : `S${weekOffset > 0 ? '+' : ''}${weekOffset}`;
-        return makePoint(weekLogs, label, isCurrentWeek, isFuture);
+        const isCurrentWeek = i === 3;
+        return makePoint(weekLogs, isCurrentWeek ? 'Actu.' : `S-${3 - i}`, isCurrentWeek);
       });
     }
 
     if (period === 'year') {
-      // 6 mois avant + mois actuel + 5 mois après = 12 points centrés
-      return Array.from({ length: 12 }, (_, i) => {
-        const monthOffset = i - 6; // -6 to +5
-        const monthDate = subMonths(today, -monthOffset);
+      // Ne garder que les mois qui ont des logs
+      const months = [];
+      for (let i = 0; i < 12; i++) {
+        const monthDate = subMonths(today, 11 - i);
         const monthStr = format(monthDate, 'yyyy-MM');
         const monthLogs = stats.logs.filter((l) => l.log_date.startsWith(monthStr));
-        const isCurrentMonth = i === 6;
-        const isFuture = monthOffset > 0;
+        if (monthLogs.length === 0 && i !== 11) continue; // toujours garder le mois actuel
+        const isCurrentMonth = i === 11;
         const label = format(monthDate, 'MMM', { locale: fr }).slice(0, 3);
-        return makePoint(monthLogs, label, isCurrentMonth, isFuture);
-      });
+        months.push(makePoint(monthLogs, label, isCurrentMonth));
+      }
+      return months;
     }
 
     return [];
@@ -233,44 +218,15 @@ export default function StatsScreen() {
                 <Text style={styles.cardTitle}>
                   Taux de complétion {selectedObj ? `— ${selectedObj.icon} ${selectedObj.title}` : ''}
                 </Text>
-                <View style={styles.chartWrapper}>
-                  <LineChart
-                    data={completionData}
-                    width={chartWidth}
-                    height={180}
-                    color={colors.accent}
-                    thickness={2.5}
-                    dataPointsColor={colors.accent}
-                    dataPointsRadius={5}
-                    xAxisThickness={0}
-                    yAxisThickness={0}
-                    yAxisTextStyle={{ color: colors.text.muted, fontSize: 10 }}
-                    yAxisLabelSuffix="%"
-                    xAxisLabelTextStyle={{ color: colors.text.muted, fontSize: 10 }}
-                    maxValue={100}
-                    minValue={0}
-                    noOfSections={4}
-                    rulesColor={colors.border}
-                    rulesType="solid"
-                    isAnimated
-                    animationDuration={800}
-                    curved
-                    curvature={0.15}
-                    areaChart
-                    startFillColor={colors.accent + '40'}
-                    endFillColor={colors.accent + '00'}
-                    startOpacity={0.4}
-                    endOpacity={0}
-                    initialSpacing={16}
-                    endSpacing={16}
-                    spacing={(chartWidth - 32) / Math.max(completionData.length - 1, 1)}
-                    showValuesAsDataPointsText
-                    focusEnabled
-                    showDataPointOnFocus
-                    focusedDataPointRadius={8}
-                    focusedDataPointColor={colors.accent}
-                  />
-                </View>
+                <SmoothChart
+                  data={completionData}
+                  screenWidth={screenWidth}
+                  accentColor={colors.accent}
+                  suffix="%"
+                  maxVal={100}
+                  scrollable={period === 'year'}
+                  minSpacing={period === 'year' ? 60 : 0}
+                />
               </View>
             )}
 
@@ -280,38 +236,15 @@ export default function StatsScreen() {
                 <Text style={styles.cardTitle}>
                   {selectedObj.icon} {selectedObj.title} ({selectedObj.unit})
                 </Text>
-                <View style={styles.chartWrapper}>
-                  <LineChart
-                    data={lineData}
-                    width={chartWidth}
-                    height={180}
-                    color={selectedObj.color || colors.accent}
-                    thickness={2.5}
-                    dataPointsColor={selectedObj.color || colors.accent}
-                    dataPointsRadius={5}
-                    hideRules
-                    xAxisThickness={0}
-                    yAxisThickness={0}
-                    hideYAxisText
-                    xAxisLabelTextStyle={{ color: colors.text.muted, fontSize: 10 }}
-                    isAnimated
-                    animationDuration={800}
-                    curved
-                    curvature={0.15}
-                    areaChart
-                    startFillColor={(selectedObj.color || colors.accent) + '40'}
-                    endFillColor="transparent"
-                    startOpacity={0.4}
-                    endOpacity={0}
-                    initialSpacing={12}
-                    endSpacing={12}
-                    spacing={(chartWidth - 24) / Math.max(lineData.length - 1, 1)}
-                    focusEnabled
-                    showDataPointOnFocus
-                    focusedDataPointRadius={6}
-                    focusedDataPointColor={selectedObj.color || colors.accent}
-                  />
-                </View>
+                <SmoothChart
+                  data={lineData.map((d) => ({
+                    ...d,
+                    dataPointText: `${d.value}`,
+                  }))}
+                  screenWidth={screenWidth}
+                  accentColor={selectedObj.color || colors.accent}
+                  suffix={selectedObj.unit ? ` ${selectedObj.unit}` : ''}
+                />
               </View>
             )}
 
@@ -373,6 +306,218 @@ export default function StatsScreen() {
     </SafeAreaView>
   );
 }
+
+// ─── Courbe SVG lisse ───────────────────────────────────────────
+
+const GRAPH_HEIGHT = 180;
+const Y_AXIS_WIDTH = 35;
+const PADDING_TOP = 30;
+const PADDING_BOTTOM = 10;
+const MARGIN_H = 16;
+
+const buildSmoothPath = (pts) => {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const curr = pts[i];
+    const next = pts[i + 1];
+    const tension = 0.3;
+    const dx = next.x - curr.x;
+    const cp1x = curr.x + dx * tension;
+    const cp2x = next.x - dx * tension;
+    d += ` C ${cp1x} ${curr.y}, ${cp2x} ${next.y}, ${next.x} ${next.y}`;
+  }
+  return d;
+};
+
+function SmoothChart({ data, screenWidth, accentColor, suffix = '', maxVal, scrollable = false, minSpacing = 0 }) {
+  if (!data || data.length === 0) return null;
+
+  const baseGraphWidth = screenWidth - spacing.lg * 2 - spacing.md * 2 - Y_AXIS_WIDTH;
+  const usableHeight = GRAPH_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
+  const computedMax = maxVal || Math.max(...data.map((d) => d.value), 1);
+
+  // Si scrollable, on garantit un espacement minimum entre les points
+  const neededWidth = minSpacing > 0 ? MARGIN_H * 2 + (data.length - 1) * minSpacing : baseGraphWidth;
+  const graphWidth = Math.max(baseGraphWidth, neededWidth);
+
+  // Grille Y : 5 niveaux
+  const ySteps = [0, 25, 50, 75, 100].map((pct) => {
+    const val = Math.round((pct / 100) * computedMax);
+    return {
+      val,
+      y: PADDING_TOP + usableHeight - (pct / 100) * usableHeight,
+      label: `${val}${suffix}`,
+    };
+  });
+
+  // Convertir data → coordonnées SVG
+  const points = data.map((item, index) => {
+    const x = data.length === 1
+      ? graphWidth / 2
+      : MARGIN_H + (index / (data.length - 1)) * (graphWidth - MARGIN_H * 2);
+    const rawVal = Math.max(0, Math.min(item.value, computedMax));
+    const y = PADDING_TOP + usableHeight - (rawVal / computedMax) * usableHeight;
+    return { x, y, value: item.value, label: item.label, isToday: item.dataPointColor === accentColor };
+  });
+
+  const linePath = buildSmoothPath(points);
+  const bottomY = PADDING_TOP + usableHeight;
+  const areaPath = linePath
+    ? `${linePath} L ${points[points.length - 1].x} ${bottomY} L ${points[0].x} ${bottomY} Z`
+    : '';
+
+  const chartContent = (
+    <View style={{ width: graphWidth, height: GRAPH_HEIGHT + 28 }}>
+      {/* Lignes de grille */}
+      {ySteps.map((step) => (
+        <View
+          key={step.val}
+          style={[chartStyles.gridLine, { top: step.y }]}
+        />
+      ))}
+
+      {/* SVG */}
+      <Svg width={graphWidth} height={GRAPH_HEIGHT}>
+        <Defs>
+          <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={accentColor} stopOpacity="0.3" />
+            <Stop offset="1" stopColor={accentColor} stopOpacity="0.02" />
+          </LinearGradient>
+        </Defs>
+
+        {areaPath ? <Path d={areaPath} fill="url(#areaGrad)" /> : null}
+
+        {linePath ? (
+          <Path d={linePath} fill="none" stroke={accentColor} strokeWidth={2.5} strokeLinecap="round" />
+        ) : null}
+
+        {points.map((pt, i) => (
+          <Circle
+            key={i}
+            cx={pt.x}
+            cy={pt.y}
+            r={pt.isToday ? 7 : 5}
+            fill={accentColor}
+            stroke="#FFFFFF"
+            strokeWidth={2}
+          />
+        ))}
+      </Svg>
+
+      {/* Labels score au-dessus — masqués quand value === 0 */}
+      {points.map((pt, i) => (
+        pt.value > 0 ? (
+          <Text
+            key={`score-${i}`}
+            style={[
+              chartStyles.scoreLabel,
+              {
+                left: pt.x - 20,
+                top: pt.y - 22,
+                color: pt.isToday ? accentColor : colors.text.secondary,
+                fontWeight: pt.isToday ? '700' : '600',
+              },
+            ]}
+          >
+            {data[i].dataPointText || `${pt.value}${suffix}`}
+          </Text>
+        ) : null
+      ))}
+
+      {/* Labels x en dessous */}
+      {points.map((pt, i) => (
+        pt.label ? (
+          <Text
+            key={`label-${i}`}
+            style={[
+              chartStyles.xLabel,
+              {
+                left: pt.x - 20,
+                top: GRAPH_HEIGHT + 4,
+                color: pt.isToday ? accentColor : colors.text.muted,
+                fontWeight: pt.isToday ? '700' : '500',
+              },
+            ]}
+          >
+            {pt.label}
+          </Text>
+        ) : null
+      ))}
+    </View>
+  );
+
+  return (
+    <View style={chartStyles.container}>
+      {/* Axe Y — toujours fixe */}
+      <View style={chartStyles.yAxis}>
+        {ySteps.map((step) => (
+          <View key={step.val} style={[chartStyles.yLabel, { top: step.y - 6 }]}>
+            <Text style={chartStyles.yLabelText}>{step.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Zone graphique — scrollable ou non */}
+      {scrollable ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={chartStyles.graphArea}
+          contentContainerStyle={{ width: graphWidth }}
+        >
+          {chartContent}
+        </ScrollView>
+      ) : (
+        <View style={chartStyles.graphArea}>
+          {chartContent}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const chartStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    height: GRAPH_HEIGHT + 28,
+  },
+  yAxis: {
+    width: Y_AXIS_WIDTH,
+    position: 'relative',
+  },
+  yLabel: {
+    position: 'absolute',
+    right: 4,
+  },
+  yLabelText: {
+    fontSize: 10,
+    color: colors.text.muted,
+  },
+  graphArea: {
+    flex: 1,
+    position: 'relative',
+  },
+  gridLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  scoreLabel: {
+    position: 'absolute',
+    width: 40,
+    textAlign: 'center',
+    fontSize: 10,
+  },
+  xLabel: {
+    position: 'absolute',
+    width: 40,
+    textAlign: 'center',
+    fontSize: 10,
+  },
+});
 
 // ─── Composants internes ────────────────────────────────────────
 
