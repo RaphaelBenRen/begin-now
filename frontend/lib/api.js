@@ -33,10 +33,16 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Gestion globale 401
+// Gestion globale des erreurs
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (__DEV__) {
+      console.warn(
+        `[API] ${error.config?.method?.toUpperCase()} ${error.config?.url} → ${error.response?.status}`,
+        error.response?.data
+      );
+    }
     if (error.response?.status === 401) {
       clearToken();
       try {
