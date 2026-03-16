@@ -45,6 +45,17 @@ router.post('/', async (req, res) => {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // Récupérer l'ancien log du jour (s'il existe) pour calculer le delta de points
+  const { data: existingLog } = await supabase
+    .from('daily_logs')
+    .select('status')
+    .eq('objective_id', objective_id)
+    .eq('log_date', today)
+    .single();
+
+  const wasDone = existingLog?.status === 'done';
+  const isDone = status === 'done';
+
   // Upsert le log du jour
   const { data: log, error } = await supabase
     .from('daily_logs')
@@ -61,11 +72,27 @@ router.post('/', async (req, res) => {
 
   if (error) return res.status(500).json({ message: error.message });
 
+  // Mettre à jour les points : +1 si done, -1 si on décoche un done
+  const pointsDelta = (isDone && !wasDone) ? 1 : (!isDone && wasDone) ? -1 : 0;
+  if (pointsDelta !== 0) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('total_points')
+      .eq('id', req.user.id)
+      .single();
+
+    const newPoints = Math.max(0, (profile?.total_points || 0) + pointsDelta);
+    await supabase
+      .from('profiles')
+      .update({ total_points: newPoints })
+      .eq('id', req.user.id);
+  }
+
   // Mettre à jour la streak et vérifier les badges
   const streakResult = await updateStreak(objective_id, req.user.id, status, today);
   const newBadges = await checkBadges(objective_id, req.user.id, streakResult);
 
-  return res.json({ log, streak: streakResult, newBadges });
+  return res.json({ log, streak: streakResult, newBadges, pointsDelta });
 });
 
 // GET /logs/history — historique avec filtres

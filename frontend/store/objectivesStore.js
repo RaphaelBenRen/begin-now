@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { format } from 'date-fns';
 import api from '../lib/api';
 import useStatsStore from './statsStore';
+import useAuthStore from './authStore';
 
 const useObjectivesStore = create((set, get) => ({
   objectives: [],
@@ -55,6 +56,14 @@ const useObjectivesStore = create((set, get) => ({
         o.id === objectiveId ? { ...o, streak } : o
       ),
     }));
+    // Mettre à jour les points en temps réel
+    if (response.data.pointsDelta) {
+      const authState = useAuthStore.getState();
+      const currentPoints = authState.user?.total_points || authState.profile?.total_points || 0;
+      const newPoints = Math.max(0, currentPoints + response.data.pointsDelta);
+      if (authState.user) authState.setUser({ ...authState.user, total_points: newPoints });
+      if (authState.profile) useAuthStore.setState({ profile: { ...authState.profile, total_points: newPoints } });
+    }
     // Rafraîchir stats + streaks en arrière-plan
     useStatsStore.getState().fetchAllPeriods();
     useStatsStore.getState().fetchStreaks();
