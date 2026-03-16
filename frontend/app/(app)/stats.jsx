@@ -472,6 +472,7 @@ function SmoothChart({ data, screenWidth, accentColor, suffix = '', maxVal, scro
   const ySteps = [0, 25, 50, 75, 100].map((pct) => {
     const val = Math.round((pct / 100) * computedMax);
     return {
+      pct,
       val,
       y: PADDING_TOP + usableHeight - (pct / 100) * usableHeight,
       label: `${val}${suffix}`,
@@ -499,7 +500,7 @@ function SmoothChart({ data, screenWidth, accentColor, suffix = '', maxVal, scro
       {/* Lignes de grille */}
       {ySteps.map((step) => (
         <View
-          key={step.val}
+          key={step.pct}
           style={[chartStyles.gridLine, { top: step.y }]}
         />
       ))}
@@ -579,7 +580,7 @@ function SmoothChart({ data, screenWidth, accentColor, suffix = '', maxVal, scro
       {/* Axe Y — toujours fixe */}
       <View style={chartStyles.yAxis}>
         {ySteps.map((step) => (
-          <View key={step.val} style={[chartStyles.yLabel, { top: step.y - 6 }]}>
+          <View key={step.pct} style={[chartStyles.yLabel, { top: step.y - 6 }]}>
             <Text style={chartStyles.yLabelText}>{step.label}</Text>
           </View>
         ))}

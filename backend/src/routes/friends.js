@@ -129,7 +129,8 @@ router.get('/:friendId/objectives', async (req, res) => {
   if (friendError) console.log('[friends/objectives] friendship check error:', friendError.message);
   if (!friendship) return res.status(403).json({ message: 'Vous n\'êtes pas amis.' });
 
-  const today = new Date().toISOString().split('T')[0];
+  const { getLocalToday } = require('../lib/dateUtils');
+  const today = getLocalToday();
 
   // D'abord récupérer les objectifs sans le filtre is_public pour diagnostiquer
   const { data, error } = await supabase

@@ -40,13 +40,44 @@ const useObjectivesStore = create((set, get) => ({
   },
 
   logObjective: async (objectiveId, status, value = null) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+
+    // Décochage : supprimer le log du jour
+    if (status === null) {
+      const response = await api.delete(`/logs/today/${objectiveId}`);
+      set((state) => {
+        const dayLogs = { ...(state.logsByDate[today] || {}) };
+        delete dayLogs[objectiveId];
+        return { logsByDate: { ...state.logsByDate, [today]: dayLogs } };
+      });
+      // Mettre à jour streak si retourné
+      if (response.data.streak) {
+        set((state) => ({
+          objectives: state.objectives.map((o) =>
+            o.id === objectiveId ? { ...o, streak: response.data.streak } : o
+          ),
+        }));
+      }
+      // Mettre à jour les points
+      if (response.data.pointsDelta) {
+        const authState = useAuthStore.getState();
+        const currentPoints = authState.user?.total_points || authState.profile?.total_points || 0;
+        const newPoints = Math.max(0, currentPoints + response.data.pointsDelta);
+        if (authState.user) authState.setUser({ ...authState.user, total_points: newPoints });
+        if (authState.profile) useAuthStore.setState({ profile: { ...authState.profile, total_points: newPoints } });
+      }
+      useStatsStore.getState().fetchAllPeriods();
+      useStatsStore.getState().fetchStreaks();
+      return { log: null, streak: response.data.streak, newBadges: [] };
+    }
+
+    // Cochage normal
     const response = await api.post('/logs', {
       objective_id: objectiveId,
       status,
       value,
     });
     const { log, streak, newBadges } = response.data;
-    const today = format(new Date(), 'yyyy-MM-dd');
     set((state) => ({
       logsByDate: {
         ...state.logsByDate,

@@ -2,39 +2,46 @@ const express = require('express');
 const supabase = require('../lib/supabase');
 const authMiddleware = require('../middleware/auth');
 
+const { getLocalToday } = require('../lib/dateUtils');
+
 const router = express.Router();
 router.use(authMiddleware);
 
 // GET /stats?period=week&objective_id=xxx
 router.get('/', async (req, res) => {
   const { period = 'week', objective_id } = req.query;
-  const today = new Date();
+  const todayStr = getLocalToday();
+
+  // Fonction pour soustraire N jours d'une date string YYYY-MM-DD
+  const subDays = (dateStr, n) => {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() - n);
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
+  };
 
   let from;
   switch (period) {
     case 'day':
-      from = today.toISOString().split('T')[0];
+      from = todayStr;
       break;
     case 'week':
-      const weekAgo = new Date(today);
-      weekAgo.setDate(today.getDate() - 6);
-      from = weekAgo.toISOString().split('T')[0];
+      from = subDays(todayStr, 6);
       break;
     case 'month':
-      const monthAgo = new Date(today);
-      monthAgo.setDate(today.getDate() - 29);
-      from = monthAgo.toISOString().split('T')[0];
+      from = subDays(todayStr, 29);
       break;
     case 'year':
-      const yearAgo = new Date(today);
-      yearAgo.setDate(today.getDate() - 364);
-      from = yearAgo.toISOString().split('T')[0];
+      from = subDays(todayStr, 364);
       break;
     default:
-      from = new Date(today.setDate(today.getDate() - 6)).toISOString().split('T')[0];
+      from = subDays(todayStr, 6);
   }
 
-  const to = new Date().toISOString().split('T')[0];
+  const to = todayStr;
 
   // Récupérer les objectifs actifs pour ne pas inclure les archivés
   const { data: activeObjectives } = await supabase

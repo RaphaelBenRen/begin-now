@@ -25,36 +25,50 @@ async function updateStreak(objectiveId, userId, status, logDate) {
 
   if (!streak) return null;
 
-  let { current_streak, longest_streak, last_log_date } = streak;
+  // Toujours recalculer la streak à partir des logs réels
+  // Récupérer tous les logs "done" triés par date décroissante
+  const { data: doneLogs } = await supabase
+    .from('daily_logs')
+    .select('log_date')
+    .eq('objective_id', objectiveId)
+    .eq('user_id', userId)
+    .eq('status', 'done')
+    .order('log_date', { ascending: false });
 
-  if (status === 'done') {
-    const yesterday = new Date(logDate);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+  let current_streak = 0;
+  let last_log_date = null;
 
-    if (last_log_date === yesterdayStr) {
-      // Continuité de la streak
-      current_streak += 1;
-    } else if (last_log_date === logDate) {
-      // Log du même jour (re-log) — pas de changement de streak
-    } else {
-      // Streak brisée ou premier log
-      current_streak = 1;
+  if (doneLogs && doneLogs.length > 0) {
+    last_log_date = doneLogs[0].log_date;
+
+    // Fonction pour soustraire N jours d'une date string YYYY-MM-DD
+    const subDays = (dateStr, n) => {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m - 1, d); // pas d'UTC, on reste en local
+      dt.setDate(dt.getDate() - n);
+      const yy = dt.getFullYear();
+      const mm = String(dt.getMonth() + 1).padStart(2, '0');
+      const dd = String(dt.getDate()).padStart(2, '0');
+      return `${yy}-${mm}-${dd}`;
+    };
+
+    const yesterdayStr = subDays(logDate, 1);
+
+    // Le dernier log done doit être aujourd'hui ou hier pour que la streak soit active
+    if (last_log_date === logDate || last_log_date === yesterdayStr) {
+      let expectedDate = last_log_date;
+      for (const dl of doneLogs) {
+        if (dl.log_date === expectedDate) {
+          current_streak++;
+          expectedDate = subDays(expectedDate, 1);
+        } else {
+          break;
+        }
+      }
     }
-
-    longest_streak = Math.max(longest_streak, current_streak);
-    last_log_date = logDate;
-
-  } else if (status === 'skipped') {
-    // Skip ne brise pas la streak, on ne met pas à jour last_log_date
-    // mais on évite que le lendemain la streak soit brisée
-    last_log_date = logDate;
   }
-  // 'failed' : on remet à 0 la streak
-  else if (status === 'failed') {
-    current_streak = 0;
-    last_log_date = logDate;
-  }
+
+  const longest_streak = Math.max(streak.longest_streak, current_streak);
 
   const { data: updated } = await supabase
     .from('streaks')

@@ -1,6 +1,7 @@
 const express = require('express');
 const supabase = require('../lib/supabase');
 const authMiddleware = require('../middleware/auth');
+const { getLocalToday } = require('../lib/dateUtils');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -177,7 +178,7 @@ router.post('/:id/log', async (req, res) => {
     return res.status(400).json({ message: 'Le défi n\'est pas encore actif.' });
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalToday();
 
   const { data: log, error } = await supabase
     .from('duel_logs')

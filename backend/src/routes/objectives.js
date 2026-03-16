@@ -18,7 +18,14 @@ router.get('/', async (req, res) => {
     .order('created_at', { ascending: true });
 
   if (error) return res.status(500).json({ message: error.message });
-  return res.json(data);
+
+  // Aplatir streak (Supabase retourne un array pour les joins one-to-many)
+  const result = (data || []).map((obj) => ({
+    ...obj,
+    streak: Array.isArray(obj.streak) ? obj.streak[0] || null : obj.streak,
+  }));
+
+  return res.json(result);
 });
 
 // POST /objectives — créer un objectif
