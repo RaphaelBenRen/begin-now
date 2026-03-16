@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { format } from 'date-fns';
 import api from '../lib/api';
+import useStatsStore from './statsStore';
 
 const useObjectivesStore = create((set, get) => ({
   objectives: [],
@@ -54,12 +55,18 @@ const useObjectivesStore = create((set, get) => ({
         o.id === objectiveId ? { ...o, streak } : o
       ),
     }));
+    // Rafraîchir stats + streaks en arrière-plan
+    useStatsStore.getState().fetchAllPeriods();
+    useStatsStore.getState().fetchStreaks();
     return { log, streak, newBadges };
   },
 
   createObjective: async (data) => {
     const response = await api.post('/objectives', data);
     set((state) => ({ objectives: [...state.objectives, response.data] }));
+    // Rafraîchir stats + streaks en arrière-plan
+    useStatsStore.getState().fetchAllPeriods();
+    useStatsStore.getState().fetchStreaks();
     return response.data;
   },
 
@@ -76,6 +83,9 @@ const useObjectivesStore = create((set, get) => ({
     set((state) => ({
       objectives: state.objectives.filter((o) => o.id !== id),
     }));
+    // Rafraîchir le cache stats en arrière-plan
+    useStatsStore.getState().fetchAllPeriods();
+    useStatsStore.getState().fetchStreaks();
   },
 }));
 
